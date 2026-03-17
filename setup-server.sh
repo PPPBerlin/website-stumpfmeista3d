@@ -5,11 +5,9 @@
 # ---------------------------------------------------------------------------
 set -e
 
-# Immer im Verzeichnis dieses Scripts arbeiten, egal von wo es aufgerufen wird
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 echo "=== Arbeitsverzeichnis: $SCRIPT_DIR ==="
-
 echo "=== Stumpfmeista3D Server Setup ==="
 
 # 1. .env prüfen
@@ -65,5 +63,9 @@ docker compose exec web python create_admin.py "$ADMIN_USER" "$ADMIN_PASS"
 
 echo ""
 echo "=== Setup abgeschlossen ==="
-echo "Admin-Bereich: https://stumpfmeista3d.org/admin"
-echo "Matomo:        https://matomo.stumpfmeista3d.org"
+echo ""
+echo "Nächster Schritt: Nginx Proxy Manager konfigurieren"
+echo "  stumpfmeista3d.org       → 127.0.0.1:5004"
+echo "  matomo.stumpfmeista3d.org → 127.0.0.1:8083"
+echo ""
+echo "Danach Matomo einrichten unter: https://matomo.stumpfmeista3d.org"
