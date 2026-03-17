@@ -5,22 +5,28 @@
 # ---------------------------------------------------------------------------
 set -e
 
+# Immer im Verzeichnis dieses Scripts arbeiten, egal von wo es aufgerufen wird
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+echo "=== Arbeitsverzeichnis: $SCRIPT_DIR ==="
+
 echo "=== Stumpfmeista3D Server Setup ==="
 
 # 1. .env prüfen
 if [ ! -f .env ]; then
     cp .env.example .env
-    echo "⚠  .env angelegt — bitte ausfüllen vor dem nächsten Schritt!"
+    echo "⚠  .env angelegt — bitte ausfüllen und das Script erneut starten!"
     exit 1
 fi
 
-# 2. ghcr.io Login (damit Watchtower das Image ziehen kann)
+# 2. ghcr.io Login
 echo ""
 echo "--- ghcr.io Login ---"
 echo "GitHub Username eingeben:"
 read GITHUB_USER
 echo "GitHub Personal Access Token (Scope: read:packages):"
 read -s GITHUB_TOKEN
+echo ""
 
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 echo "✓ ghcr.io Login erfolgreich"
@@ -36,20 +42,28 @@ docker compose pull
 docker compose up -d
 
 echo ""
-echo "✓ Stack läuft. Warte kurz auf Datenbankmigrationen..."
-sleep 5
+echo "✓ Stack läuft. Warte auf Datenbankmigrationen..."
+sleep 8
 
-# 5. Admin-User anlegen
+# 5. Prüfen ob web-Container läuft
+if ! docker compose ps web | grep -q "running"; then
+    echo "⚠  web-Container läuft nicht. Logs:"
+    docker compose logs web --tail=30
+    exit 1
+fi
+
+# 6. Admin-User anlegen
 echo ""
 echo "--- Admin-User anlegen ---"
 echo "Gewünschter Benutzername:"
 read ADMIN_USER
 echo "Gewünschtes Passwort:"
 read -s ADMIN_PASS
+echo ""
 
 docker compose exec web python create_admin.py "$ADMIN_USER" "$ADMIN_PASS"
 
 echo ""
 echo "=== Setup abgeschlossen ==="
-echo "Matomo einrichten unter: https://matomo.stumpfmeista3d.org"
-echo "Admin-Bereich:           https://stumpfmeista3d.org/admin"
+echo "Admin-Bereich: https://stumpfmeista3d.org/admin"
+echo "Matomo:        https://matomo.stumpfmeista3d.org"
