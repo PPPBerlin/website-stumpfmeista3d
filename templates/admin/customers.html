@@ -1,0 +1,90 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Kunden{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Kunden</h1>
+    <p class="text-gray-600 text-sm mt-1">{{ customers|length }} Einträge</p>
+  </div>
+  <a href="{{ url_for('admin.customer_new') }}"
+     class="px-5 py-2.5 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg
+            hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+    + Neuer Kunde
+  </a>
+</div>
+
+{# Suche #}
+<form method="GET" class="mb-6">
+  <div class="relative max-w-md">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name, E-Mail oder Firma…"
+           class="w-full bg-[#1C0D28] border border-[#8B2FC9]/30 rounded-lg pl-10 pr-4 py-3
+                  text-gray-200 text-sm font-mono placeholder-gray-600
+                  focus:outline-none focus:border-[#39FF14] transition-all" />
+    <svg class="absolute left-3 top-3.5 w-4 h-4 text-gray-600" fill="none"
+         stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+    </svg>
+  </div>
+</form>
+
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl overflow-hidden">
+  {% if customers %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/15 bg-[#130820]">
+        <th class="px-6 py-4 font-normal">Name</th>
+        <th class="px-6 py-4 font-normal">E-Mail</th>
+        <th class="px-6 py-4 font-normal">Telefon</th>
+        <th class="px-6 py-4 font-normal">Firma</th>
+        <th class="px-6 py-4 font-normal">Projekte</th>
+        <th class="px-6 py-4 font-normal">Seit</th>
+        <th class="px-6 py-4 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for customer in customers %}
+      <tr class="hover:bg-white/2 transition-colors">
+        <td class="px-6 py-4">
+          <span class="text-gray-200 font-medium">{{ customer.full_name }}</span>
+        </td>
+        <td class="px-6 py-4 text-gray-500 text-xs">{{ customer.email }}</td>
+        <td class="px-6 py-4 text-gray-600 text-xs">{{ customer.phone or '—' }}</td>
+        <td class="px-6 py-4 text-gray-500 text-xs">{{ customer.company or '—' }}</td>
+        <td class="px-6 py-4">
+          {% set pc = customer.projects.count() %}
+          {% if pc > 0 %}
+            <span class="text-[#39FF14] text-xs">{{ pc }}</span>
+          {% else %}
+            <span class="text-gray-700 text-xs">0</span>
+          {% endif %}
+        </td>
+        <td class="px-6 py-4 text-gray-600 text-xs whitespace-nowrap">
+          {{ customer.created_at.strftime('%d.%m.%Y') }}
+        </td>
+        <td class="px-6 py-4">
+          <a href="{{ url_for('admin.customer_detail', customer_id=customer.id) }}"
+             class="text-xs text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            Öffnen →
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="text-center py-16 text-gray-600">
+      <p class="text-4xl mb-3">◎</p>
+      {% if q %}
+        <p>Keine Kunden für „{{ q }}" gefunden.</p>
+        <a href="{{ url_for('admin.customers') }}" class="text-xs text-[#8B2FC9] mt-2 block">
+          Suche zurücksetzen
+        </a>
+      {% else %}
+        <p>Noch keine Kunden angelegt.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

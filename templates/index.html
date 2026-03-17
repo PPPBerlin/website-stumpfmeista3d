@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Stumpfmeista3D – 3D-Druck & IT-Service aus Berlin{% endblock %}
+{% block meta_description %}Dein Spezialist für 3D-gedruckte Ersatzteile & IT-Service in Berlin. Beratung, Konstruktion und Druck – alles aus einer Hand.{% endblock %}
+
+{% block extra_head %}
+{# ===== JSON-LD Strukturierte Daten (Google Rich Results) ===== #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Stumpfmeista3D",
+  "description": "3D-Druck und IT-Service aus Berlin. Ersatzteile, Prototypen und individuelle Bauteile – von der Beratung über die Konstruktion bis zum fertigen Druck.",
+  "url": "https://stumpfmeista3d.org",
+  "telephone": "+4917249977666",
+  "email": "info@stumpfmeista3d.de",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Wolfsgartenstraße 6",
+    "addressLocality": "Berlin",
+    "postalCode": "12555",
+    "addressCountry": "DE"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 52.4568,
+    "longitude": 13.5962
+  },
+  "areaServed": {
+    "@type": "Country",
+    "name": "Germany"
+  },
+  "serviceType": ["3D-Druck", "IT-Service", "CAD-Konstruktion", "Ersatzteile"],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Services",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "3D-Druck",
+          "description": "FDM-Druck für Ersatzteile, Prototypen und individuelle Bauteile in PLA, PETG und TPU."
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "CAD-Konstruktion",
+          "description": "3D-Modellierung und Konstruktion anhand von Fotos, Skizzen oder Maßen."
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "IT-Service",
+          "description": "IT-Support, PC-Setup, Netzwerk und Automatisierung."
+        }
+      }
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block body %}
+
+{# ===== NAVIGATION ===== #}
+<nav class="fixed top-0 left-0 right-0 z-50 bg-[#130820]/90 backdrop-blur-sm border-b border-[#8B2FC9]/30">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <a href="#hero" class="flex items-center gap-3">
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="Stumpfmeista3D Logo" class="h-10 w-auto" />
+    </a>
+    <div class="hidden md:flex gap-8 text-sm">
+      <a href="#services" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Services</a>
+      <a href="#process" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Ablauf</a>
+      <a href="#about" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Über mich</a>
+      <a href="#contact" class="text-[#39FF14] border border-[#39FF14]/50 px-4 py-1 rounded
+                                hover:bg-[#39FF14]/10 transition-all duration-200"
+         style="text-shadow: 0 0 8px #39FF14;">
+        Anfrage stellen
+      </a>
+    </div>
+    {# Mobile Menu Button #}
+    <button id="menu-toggle" class="md:hidden text-[#39FF14]" aria-label="Menü öffnen">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+  {# Mobile Menu #}
+  <div id="mobile-menu" class="hidden md:hidden bg-[#130820] border-t border-[#8B2FC9]/20 px-6 pb-4">
+    <a href="#services" class="block py-2 text-gray-400 hover:text-[#39FF14]">Services</a>
+    <a href="#process" class="block py-2 text-gray-400 hover:text-[#39FF14]">Ablauf</a>
+    <a href="#about" class="block py-2 text-gray-400 hover:text-[#39FF14]">Über mich</a>
+    <a href="#contact" class="block py-2 text-[#39FF14]">Anfrage stellen</a>
+  </div>
+</nav>
+
+{# ===== HERO ===== #}
+<section id="hero" class="relative min-h-screen flex items-center justify-center
+                            overflow-hidden scanlines pt-16">
+  {# Hintergrund-Gitter #}
+  <div class="absolute inset-0 opacity-10"
+       style="background-image: linear-gradient(#8B2FC9 1px, transparent 1px),
+                                linear-gradient(90deg, #8B2FC9 1px, transparent 1px);
+              background-size: 50px 50px;">
+  </div>
+  {# Glow-Orbs #}
+  <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl"
+       style="background: #39FF14;"></div>
+  <div class="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl"
+       style="background: #8B2FC9;"></div>
+
+  <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
+    <img src="{{ url_for('static', filename='img/logo.png') }}"
+         alt="Stumpfmeista3D" class="h-40 w-auto mx-auto mb-8 drop-shadow-2xl" />
+
+    <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+      <span class="neon-text">3D-Druck</span>
+      <span class="text-white"> & </span>
+      <span class="purple-text">IT-Service</span>
+    </h1>
+    <p class="text-gray-400 text-lg md:text-xl mb-2 font-mono">
+      aus Berlin — für ganz Deutschland
+    </p>
+    <p class="text-gray-500 text-base md:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+      Dein Ersatzteil gebrochen? Kein Problem. Von der Beratung über die
+      Konstruktion bis zum fertigen Druck — alles aus einer Hand.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#contact"
+         class="px-8 py-4 bg-[#39FF14] text-[#130820] font-bold rounded-lg
+                hover:bg-[#39FF14]/90 transition-all duration-200
+                shadow-[0_0_20px_#39FF1460] hover:shadow-[0_0_30px_#39FF14]">
+        Jetzt Anfrage stellen
+      </a>
+      <a href="#services"
+         class="px-8 py-4 border border-[#8B2FC9] text-[#8B2FC9] font-bold rounded-lg
+                hover:bg-[#8B2FC9]/10 transition-all duration-200">
+        Services ansehen
+      </a>
+    </div>
+  </div>
+
+  {# Scroll-Indikator #}
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+    <svg class="w-6 h-6 text-[#39FF14]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+</section>
+
+{# ===== SERVICES ===== #}
+<section id="services" class="py-24 px-6 bg-[#130820]">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="text-[#39FF14] text-sm font-mono mb-2 tracking-widest uppercase">Was ich biete</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Services</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      {# Card 1: 3D-Druck #}
+      <div class="group relative p-8 rounded-xl border border-[#8B2FC9]/30
+                  bg-[#1C0D28] hover:border-[#39FF14]/60
+                  transition-all duration-300 hover:shadow-[0_0_20px_#39FF1420]">
+        <div class="w-14 h-14 mb-6 rounded-lg bg-[#39FF14]/10 flex items-center justify-center
+                    group-hover:bg-[#39FF14]/20 transition-colors">
+          <svg class="w-8 h-8 text-[#39FF14]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-3 group-hover:text-[#39FF14] transition-colors">
+          3D-Druck
+        </h3>
+        <p class="text-gray-400 leading-relaxed text-sm">
+          Präziser FDM-Druck für Ersatzteile, Prototypen und individuelle Bauteile.
+          Verschiedene Materialien — PLA, PETG, TPU — je nach Anforderung.
+        </p>
+        <ul class="mt-4 space-y-1 text-xs text-gray-500">
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> Ersatzteile & Reparatur</li>
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> Prototypen & Kleinserien</li>
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> Individuelle Sonderanfertigungen</li>
+        </ul>
+      </div>
+
+      {# Card 2: Konstruktion #}
+      <div class="group relative p-8 rounded-xl border border-[#8B2FC9]/30
+                  bg-[#1C0D28] hover:border-[#8B2FC9]/80
+                  transition-all duration-300 hover:shadow-[0_0_20px_#8B2FC920]">
+        <div class="w-14 h-14 mb-6 rounded-lg bg-[#8B2FC9]/10 flex items-center justify-center
+                    group-hover:bg-[#8B2FC9]/20 transition-colors">
+          <svg class="w-8 h-8 text-[#8B2FC9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-3 group-hover:text-[#8B2FC9] transition-colors">
+          Konstruktion
+        </h3>
+        <p class="text-gray-400 leading-relaxed text-sm">
+          Kein 3D-Modell vorhanden? Kein Problem. Ich konstruiere dein Bauteil
+          anhand von Fotos, Skizzen oder Maßen direkt am CAD.
+        </p>
+        <ul class="mt-4 space-y-1 text-xs text-gray-500">
+          <li class="flex items-center gap-2"><span class="text-[#8B2FC9]">▸</span> CAD-Konstruktion (Fusion 360)</li>
+          <li class="flex items-center gap-2"><span class="text-[#8B2FC9]">▸</span> Reverse Engineering</li>
+          <li class="flex items-center gap-2"><span class="text-[#8B2FC9]">▸</span> STL/3MF Lieferung möglich</li>
+        </ul>
+      </div>
+
+      {# Card 3: IT-Service #}
+      <div class="group relative p-8 rounded-xl border border-[#8B2FC9]/30
+                  bg-[#1C0D28] hover:border-[#39FF14]/60
+                  transition-all duration-300 hover:shadow-[0_0_20px_#39FF1420]">
+        <div class="w-14 h-14 mb-6 rounded-lg bg-[#39FF14]/10 flex items-center justify-center
+                    group-hover:bg-[#39FF14]/20 transition-colors">
+          <svg class="w-8 h-8 text-[#39FF14]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-3 group-hover:text-[#39FF14] transition-colors">
+          IT-Service
+        </h3>
+        <p class="text-gray-400 leading-relaxed text-sm">
+          Technik-Support, Einrichtung und Beratung rund um Hard- und Software.
+          Praktische Lösungen statt Fachchinesisch.
+        </p>
+        <ul class="mt-4 space-y-1 text-xs text-gray-500">
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> PC-Setup & Reparatur</li>
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> Netzwerk & Smart Home</li>
+          <li class="flex items-center gap-2"><span class="text-[#39FF14]">▸</span> Software & Automatisierung</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ===== ABLAUF / PROZESS ===== #}
+<section id="process" class="py-24 px-6 bg-[#1C0D28]">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="text-[#8B2FC9] text-sm font-mono mb-2 tracking-widest uppercase"
+         style="text-shadow: 0 0 8px #8B2FC9;">So läuft's ab</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Vom Defekt zum Ersatzteil</h2>
+    </div>
+
+    <div class="relative">
+      {# Vertikale Linie #}
+      <div class="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b
+                  from-[#39FF14] via-[#8B2FC9] to-transparent hidden md:block"></div>
+
+      <div class="space-y-10">
+        {% set steps = [
+          ('01', 'Anfrage', 'Du schickst mir Fotos, Skizzen oder eine kurze Beschreibung deines defekten Teils.', '#39FF14'),
+          ('02', 'Beratung', 'Ich melde mich innerhalb von 24h mit einer Einschätzung und einem Angebot.', '#8B2FC9'),
+          ('03', 'Konstruktion', 'Falls nötig, erstelle ich ein 3D-Modell. Du kriegst eine Vorschau zur Freigabe.', '#39FF14'),
+          ('04', 'Druck & Lieferung', 'Nach Freigabe wird gedruckt und das Teil direkt zu dir geschickt.', '#8B2FC9'),
+        ] %}
+        {% for num, title, desc, color in steps %}
+        <div class="flex gap-6 md:gap-10 items-start">
+          <div class="flex-shrink-0 w-12 h-12 rounded-full border-2 flex items-center justify-center
+                      font-bold text-sm z-10 bg-[#1C0D28]"
+               style="border-color: {{ color }}; color: {{ color }};
+                      box-shadow: 0 0 10px {{ color }}60;">
+            {{ num }}
+          </div>
+          <div class="pb-2">
+            <h3 class="text-lg font-bold mb-1" style="color: {{ color }};">{{ title }}</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">{{ desc }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ===== ÜBER MICH ===== #}
+<section id="about" class="py-24 px-6 bg-[#130820]">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="text-[#39FF14] text-sm font-mono mb-2 tracking-widest uppercase">Der Macher dahinter</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Über mich</h2>
+    </div>
+    <div class="flex flex-col md:flex-row gap-12 items-center">
+      <div class="flex-shrink-0 w-48 h-48 rounded-full border-2 border-[#39FF14]/50
+                  overflow-hidden shadow-[0_0_30px_#39FF1430]">
+        {# Platzhalter – durch echtes Foto ersetzen #}
+        <div class="w-full h-full bg-[#1C0D28] flex items-center justify-center">
+          <svg class="w-20 h-20 text-[#39FF14]/30" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Ich bin Maker aus Berlin mit einer Leidenschaft für Technik, 3D-Druck und
+          Problemlösung. Seit Jahren drucke ich Ersatzteile für Freunde, Familie und
+          Kunden — weil reparieren oft besser ist als wegwerfen.
+        </p>
+        <p class="text-gray-400 leading-relaxed mb-6 text-sm">
+          Mit <span class="text-[#39FF14]">Stumpfmeista3D</span> biete ich das jetzt
+          professionell an: von der ersten Beratung bis zum fertigen Teil. Schnell,
+          zuverlässig und ohne Umwege.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          {% for tag in ['Berlin-based', 'FDM-Druck', 'CAD/Fusion 360', 'PLA · PETG · TPU', 'IT-Nerd'] %}
+          <span class="px-3 py-1 text-xs font-mono border border-[#8B2FC9]/50
+                       text-[#8B2FC9] rounded-full">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ===== KONTAKTFORMULAR ===== #}
+<section id="contact" class="py-24 px-6 bg-[#1C0D28]">
+  <div class="max-w-2xl mx-auto">
+    <div class="text-center mb-12">
+      <p class="text-[#8B2FC9] text-sm font-mono mb-2 tracking-widest uppercase"
+         style="text-shadow: 0 0 8px #8B2FC9;">Let's go</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Anfrage stellen</h2>
+      <p class="text-gray-400 text-sm">
+        Beschreib dein Projekt — je mehr Details, desto besser.
+        Du kannst direkt Fotos, Skizzen oder 3D-Dateien anhängen.
+      </p>
+    </div>
+
+    {# Formular #}
+    <form id="contact-form" class="space-y-5" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+            Vorname <span class="text-[#39FF14]">*</span>
+          </label>
+          <input type="text" name="first_name" required
+                 class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                        text-gray-100 text-sm font-mono placeholder-gray-600
+                        focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                        transition-all duration-200"
+                 placeholder="Max" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+            Nachname <span class="text-[#39FF14]">*</span>
+          </label>
+          <input type="text" name="last_name" required
+                 class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                        text-gray-100 text-sm font-mono placeholder-gray-600
+                        focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                        transition-all duration-200"
+                 placeholder="Mustermann" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+            E-Mail <span class="text-[#39FF14]">*</span>
+          </label>
+          <input type="email" name="email" required
+                 class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                        text-gray-100 text-sm font-mono placeholder-gray-600
+                        focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                        transition-all duration-200"
+                 placeholder="max@example.de" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+            Telefon
+          </label>
+          <input type="tel" name="phone"
+                 class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                        text-gray-100 text-sm font-mono placeholder-gray-600
+                        focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                        transition-all duration-200"
+                 placeholder="+49 30 …" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+          Betreff <span class="text-[#39FF14]">*</span>
+        </label>
+        <input type="text" name="subject" required
+               class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                      text-gray-100 text-sm font-mono placeholder-gray-600
+                      focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                      transition-all duration-200"
+               placeholder="z.B. Gebrochene Halterung — Staubsauger Bosch X5" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+          Beschreibung <span class="text-[#39FF14]">*</span>
+        </label>
+        <textarea name="message" required rows="5"
+                  class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                         text-gray-100 text-sm font-mono placeholder-gray-600 resize-none
+                         focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440]
+                         transition-all duration-200"
+                  placeholder="Beschreib das defekte Teil: Was ist kaputt? Aus welchem Gerät?
+Maße oder Fotos hast du dabei? Je mehr, desto besser..."></textarea>
+      </div>
+
+      {# Datei-Upload #}
+      <div>
+        <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+          Dateien anhängen
+          <span class="normal-case text-gray-600 ml-2">STL, 3MF, PDF, JPG, PNG · max. 50 MB</span>
+        </label>
+        <div id="drop-zone"
+             class="border-2 border-dashed border-[#8B2FC9]/40 rounded-lg p-8
+                    text-center cursor-pointer transition-all duration-200
+                    hover:border-[#39FF14]/60 hover:bg-[#39FF14]/5">
+          <svg class="w-10 h-10 mx-auto mb-3 text-[#8B2FC9]/60" fill="none"
+               stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16
+                     6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-sm text-gray-500 font-mono">
+            Dateien hierher ziehen oder
+            <span class="text-[#39FF14] underline cursor-pointer">klicken zum Auswählen</span>
+          </p>
+          <input type="file" id="file-input" name="files" multiple accept=".stl,.3mf,.pdf,.jpg,.jpeg,.png"
+                 class="hidden" />
+        </div>
+        {# Datei-Liste #}
+        <ul id="file-list" class="mt-3 space-y-1"></ul>
+      </div>
+
+      {# Submit #}
+      <button type="submit" id="submit-btn"
+              class="w-full py-4 bg-[#39FF14] text-[#130820] font-bold rounded-lg
+                     hover:bg-[#39FF14]/90 transition-all duration-200
+                     shadow-[0_0_20px_#39FF1460] hover:shadow-[0_0_30px_#39FF14]
+                     disabled:opacity-50 disabled:cursor-not-allowed">
+        <span id="submit-text">Anfrage absenden</span>
+        <span id="submit-spinner" class="hidden">Wird gesendet…</span>
+      </button>
+
+      {# Feedback-Bereich #}
+      <div id="form-feedback" class="hidden text-center py-3 rounded-lg text-sm font-mono"></div>
+    </form>
+  </div>
+</section>
+
+{# ===== FOOTER ===== #}
+<footer class="bg-[#130820] border-t border-[#8B2FC9]/20 py-10 px-6">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+    <div class="text-center md:text-left">
+      <p class="font-bold text-[#39FF14] font-mono" style="text-shadow: 0 0 8px #39FF14;">
+        STUMPFMEISTA3D
+      </p>
+      <p class="text-xs text-gray-600 mt-1">3D-Druck & IT-Service · Berlin</p>
+    </div>
+    <div class="flex gap-6 text-xs text-gray-600">
+      <a href="{{ url_for('core.impressum') }}" class="hover:text-[#39FF14] transition-colors">Impressum</a>
+      <a href="{{ url_for('core.datenschutz') }}" class="hover:text-[#39FF14] transition-colors">Datenschutz</a>
+    </div>
+    <p class="text-xs text-gray-700 font-mono">
+      © {{ now.year if now else '2025' }} Stumpfmeista3D
+    </p>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

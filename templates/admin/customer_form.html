@@ -1,0 +1,95 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Kunde bearbeiten' if customer else 'Neuer Kunde' }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{{ url_for('admin.customers') }}"
+     class="text-xs text-gray-600 hover:text-gray-400 transition-colors">← Kunden</a>
+</div>
+
+<div class="max-w-xl">
+  <h1 class="text-2xl font-bold text-white mb-8">
+    {{ 'Kunde bearbeiten' if customer else 'Neuen Kunden anlegen' }}
+  </h1>
+
+  <form method="POST"
+        class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-8 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="grid grid-cols-2 gap-5">
+      <div>
+        <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+          Vorname <span class="text-[#39FF14]">*</span>
+        </label>
+        <input type="text" name="first_name" required
+               value="{{ customer.first_name if customer else '' }}"
+               class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                      text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                      focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+          Nachname <span class="text-[#39FF14]">*</span>
+        </label>
+        <input type="text" name="last_name" required
+               value="{{ customer.last_name if customer else '' }}"
+               class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                      text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                      focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+        E-Mail <span class="text-[#39FF14]">*</span>
+      </label>
+      <input type="email" name="email" required
+             value="{{ customer.email if customer else '' }}"
+             class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                    text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                    focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-5">
+      <div>
+        <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Telefon</label>
+        <input type="tel" name="phone"
+               value="{{ customer.phone if customer else '' }}"
+               class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                      text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                      focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Firma</label>
+        <input type="text" name="company"
+               value="{{ customer.company if customer else '' }}"
+               class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                      text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                      focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Notizen</label>
+      <textarea name="notes" rows="4"
+                class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                       text-gray-100 text-sm resize-none focus:outline-none focus:border-[#39FF14]
+                       focus:shadow-[0_0_8px_#39FF1440] transition-all placeholder-gray-700"
+                placeholder="Interne Notizen zum Kunden…">{{ customer.notes if customer else '' }}</textarea>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit"
+              class="px-8 py-3 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg
+                     hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+        {{ 'Speichern' if customer else 'Anlegen' }}
+      </button>
+      <a href="{{ url_for('admin.customers') }}"
+         class="px-8 py-3 border border-[#8B2FC9]/40 text-gray-400 text-sm rounded-lg
+                hover:border-[#8B2FC9] hover:text-gray-200 transition-all">
+        Abbrechen
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

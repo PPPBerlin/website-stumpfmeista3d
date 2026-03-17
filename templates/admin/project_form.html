@@ -1,0 +1,88 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Projekt bearbeiten' if project else 'Neues Projekt' }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{{ url_for('admin.projects') }}"
+     class="text-xs text-gray-600 hover:text-gray-400 transition-colors">← Projekte</a>
+</div>
+
+<div class="max-w-xl">
+  <h1 class="text-2xl font-bold text-white mb-8">
+    {{ 'Projekt bearbeiten' if project else 'Neues Projekt anlegen' }}
+  </h1>
+
+  <form method="POST"
+        class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-8 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+        Projekttitel <span class="text-[#39FF14]">*</span>
+      </label>
+      <input type="text" name="title" required
+             value="{{ project.title if project else request.args.get('title', '') }}"
+             placeholder="z.B. Ersatzhalterung Dyson V8"
+             class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                    text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                    focus:shadow-[0_0_8px_#39FF1440] transition-all placeholder-gray-700" />
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+        Kunde <span class="text-[#39FF14]">*</span>
+      </label>
+      <select name="customer_id" required
+              class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                     text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                     focus:shadow-[0_0_8px_#39FF1440] transition-all">
+        <option value="">— Kunden auswählen —</option>
+        {% set preselect = (project.customer_id if project else request.args.get('customer_id', '')|int) %}
+        {% for c in customers %}
+        <option value="{{ c.id }}" {% if c.id == preselect %}selected{% endif %}>
+          {{ c.full_name }}{% if c.company %} ({{ c.company }}){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Status</label>
+      <select name="status"
+              class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                     text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                     focus:shadow-[0_0_8px_#39FF1440] transition-all">
+        {% for s in statuses %}
+        <option value="{{ s }}"
+                {% if (project and project.status == s) or (not project and s == 'Anfrage') %}
+                  selected{% endif %}>
+          {{ s }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">Beschreibung</label>
+      <textarea name="description" rows="5"
+                placeholder="Details zum Projekt, Maße, Besonderheiten…"
+                class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                       text-gray-100 text-sm resize-none focus:outline-none focus:border-[#39FF14]
+                       focus:shadow-[0_0_8px_#39FF1440] transition-all placeholder-gray-700">{{ project.description if project else '' }}</textarea>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit"
+              class="px-8 py-3 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg
+                     hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+        {{ 'Speichern' if project else 'Anlegen' }}
+      </button>
+      <a href="{{ url_for('admin.projects') }}"
+         class="px-8 py-3 border border-[#8B2FC9]/40 text-gray-400 text-sm rounded-lg
+                hover:border-[#8B2FC9] hover:text-gray-200 transition-all">
+        Abbrechen
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+  # Manueller Trigger aus dem GitHub UI
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}   # → ghcr.io/DEIN_USERNAME/website-stumpfmeista3d
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Tests (schnell, blockiert den Build bei Fehlern)
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Dependencies installieren
+        run: pip install -r requirements.txt
+
+      - name: Smoke-Test (Routen + DB)
+        env:
+          SECRET_KEY: ci-test-secret-key
+          SITE_URL: https://stumpfmeista3d.org
+        run: |
+          python -c "
+          from app import create_app
+          from extensions import db
+          app = create_app()
+          with app.app_context():
+              db.create_all()
+          client = app.test_client()
+          routes = ['/', '/impressum', '/datenschutz', '/sitemap.xml', '/robots.txt']
+          for r in routes:
+              resp = client.get(r)
+              assert resp.status_code == 200, f'FEHLER: GET {r} → {resp.status_code}'
+              print(f'OK  GET {r}')
+          # Admin-Login-Seite erreichbar
+          resp = client.get('/admin/login')
+          assert resp.status_code == 200
+          print('OK  GET /admin/login')
+          print('Alle Tests bestanden.')
+          "
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Docker Image bauen und auf ghcr.io pushen
+  # ---------------------------------------------------------------------------
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: test    # läuft nur wenn Tests grün sind
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: Bei ghcr.io einloggen
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image-Metadaten extrahieren
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # latest immer auf main
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Git SHA als zusätzliches Tag (für Rollback)
+            type=sha,prefix=sha-,format=short
+
+      - name: Image bauen und pushen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Build-Cache für schnellere Builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy-Info ausgeben
+        run: |
+          echo "### Deployment Info" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Watchtower** zieht das neue Image innerhalb von 5 Minuten." >> $GITHUB_STEP_SUMMARY

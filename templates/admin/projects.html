@@ -1,0 +1,101 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Projekte{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Projekte</h1>
+    <p class="text-gray-600 text-sm mt-1">{{ projects|length }} Einträge</p>
+  </div>
+  <a href="{{ url_for('admin.project_new') }}"
+     class="px-5 py-2.5 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg
+            hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+    + Neues Projekt
+  </a>
+</div>
+
+{# Status-Filter #}
+<div class="flex flex-wrap gap-2 mb-6">
+  <a href="{{ url_for('admin.projects') }}"
+     class="px-4 py-1.5 rounded-full text-xs font-medium transition-all
+            {% if not status_filter %}
+              bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30
+            {% else %}
+              text-gray-500 border border-gray-700 hover:border-gray-500
+            {% endif %}">
+    Alle
+  </a>
+  {% for s in statuses %}
+  <a href="{{ url_for('admin.projects', status=s) }}"
+     class="px-4 py-1.5 rounded-full text-xs font-medium transition-all
+            {% if status_filter == s %}
+              bg-[#8B2FC9]/20 text-[#8B2FC9] border border-[#8B2FC9]/40
+            {% else %}
+              text-gray-500 border border-gray-700 hover:border-gray-500 hover:text-gray-300
+            {% endif %}">
+    {{ s }}
+  </a>
+  {% endfor %}
+</div>
+
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl overflow-hidden">
+  {% if projects %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/15 bg-[#130820]">
+        <th class="px-6 py-4 font-normal">#</th>
+        <th class="px-6 py-4 font-normal">Titel</th>
+        <th class="px-6 py-4 font-normal">Kunde</th>
+        <th class="px-6 py-4 font-normal">Status</th>
+        <th class="px-6 py-4 font-normal">Zuletzt geändert</th>
+        <th class="px-6 py-4 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for project in projects %}
+      <tr class="hover:bg-white/2 transition-colors">
+        <td class="px-6 py-4 text-gray-600">{{ project.id }}</td>
+        <td class="px-6 py-4 text-gray-200 font-medium max-w-xs truncate">
+          {{ project.title }}
+        </td>
+        <td class="px-6 py-4">
+          <a href="{{ url_for('admin.customer_detail', customer_id=project.customer.id) }}"
+             class="text-[#8B2FC9] hover:text-[#39FF14] text-xs transition-colors">
+            {{ project.customer.full_name }}
+          </a>
+        </td>
+        <td class="px-6 py-4">
+          <span class="px-2.5 py-1 rounded-full text-xs
+            {% if project.status in ['Abgeschlossen', 'Archiviert'] %}
+              bg-gray-800 text-gray-500
+            {% elif project.status == 'Im Druck' %}
+              bg-[#39FF14]/15 text-[#39FF14]
+            {% elif project.status == 'Konstruktion' %}
+              bg-yellow-900/30 text-yellow-400
+            {% else %}
+              bg-[#8B2FC9]/20 text-[#8B2FC9]
+            {% endif %}">
+            {{ project.status }}
+          </span>
+        </td>
+        <td class="px-6 py-4 text-gray-600 text-xs whitespace-nowrap">
+          {{ project.updated_at.strftime('%d.%m.%Y %H:%M') }}
+        </td>
+        <td class="px-6 py-4">
+          <a href="{{ url_for('admin.project_detail', project_id=project.id) }}"
+             class="text-xs text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            Öffnen →
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="text-center py-16 text-gray-600">
+      <p class="text-4xl mb-3">◐</p>
+      <p>Keine Projekte{% if status_filter %} mit Status „{{ status_filter }}"{% endif %}.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}Datenschutzerklärung – Stumpfmeista3D{% endblock %}
+{% block meta_description %}Datenschutzerklärung von Stumpfmeista3D gemäß DSGVO.{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, follow" />
+{% endblock %}
+
+{% block body %}
+
+{# Minimale Navigation #}
+<nav class="bg-[#130820]/90 backdrop-blur-sm border-b border-[#8B2FC9]/30">
+  <div class="max-w-6xl mx-auto px-6 py-4">
+    <a href="{{ url_for('core.index') }}" class="text-[#39FF14] text-sm font-mono hover:underline"
+       style="text-shadow: 0 0 8px #39FF14;">
+      ← Zurück zur Startseite
+    </a>
+  </div>
+</nav>
+
+<main class="max-w-3xl mx-auto px-6 py-16">
+
+  <h1 class="text-3xl font-bold text-white mb-2">Datenschutzerklärung</h1>
+  <p class="text-[#39FF14] text-xs font-mono mb-10 tracking-widest"
+     style="text-shadow: 0 0 8px #39FF14;">
+    Gemäß Art. 13, 14 DSGVO
+  </p>
+
+  <div class="space-y-10 text-gray-300 text-sm leading-relaxed">
+
+    {# 1. Verantwortlicher #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        1. Verantwortlicher
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-1">
+        <p class="text-white font-medium">Paul-Philipp Pürst · Stumpfmeista3D</p>
+        <p>Wolfsgartenstraße 6, 12555 Berlin</p>
+        <p>
+          E-Mail:
+          <a href="mailto:info@stumpfmeista3d.de"
+             class="text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            info@stumpfmeista3d.de
+          </a>
+        </p>
+        <p>
+          Telefon:
+          <a href="tel:+4917249977666"
+             class="text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            0172 / 4977 666
+          </a>
+        </p>
+      </div>
+    </section>
+
+    {# 2. Hosting #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        2. Hosting & Server-Logs
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>
+          Diese Website wird auf einem eigenen Server in Deutschland betrieben.
+          Beim Aufruf der Website wird vom Server automatisch eine
+          <strong class="text-gray-200">Server-Log-Datei</strong> erstellt, die folgende
+          Informationen enthält:
+        </p>
+        <ul class="list-none space-y-1 pl-4">
+          {% for item in [
+            'IP-Adresse des anfragenden Geräts (anonymisiert)',
+            'Datum und Uhrzeit des Zugriffs',
+            'Aufgerufene URL',
+            'HTTP-Statuscode',
+            'Übertragene Datenmenge',
+            'Browser und Betriebssystem (User-Agent)',
+          ] %}
+          <li class="flex items-start gap-2">
+            <span class="text-[#39FF14] flex-shrink-0 mt-0.5">▸</span>
+            <span>{{ item }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        <p>
+          <strong class="text-gray-200">Rechtsgrundlage:</strong>
+          Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Betrieb und Sicherheit der Website).
+          Die Logs werden nach spätestens 7 Tagen automatisch gelöscht.
+        </p>
+      </div>
+    </section>
+
+    {# 3. Kontaktformular #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        3. Kontaktformular & Dateiuploads
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>
+          Wenn du das Kontaktformular nutzt, werden folgende Daten verarbeitet:
+        </p>
+        <ul class="list-none space-y-1 pl-4">
+          {% for item in [
+            'Vorname und Nachname',
+            'E-Mail-Adresse',
+            'Telefonnummer (optional)',
+            'Betreff und Nachrichteninhalt',
+            'Hochgeladene Dateien (STL, 3MF, PDF, Bilder) – optional',
+          ] %}
+          <li class="flex items-start gap-2">
+            <span class="text-[#8B2FC9] flex-shrink-0 mt-0.5">▸</span>
+            <span>{{ item }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        <p>
+          <strong class="text-gray-200">Zweck:</strong>
+          Bearbeitung deiner Anfrage und Vorbereitung eines möglichen Auftrags.
+        </p>
+        <p>
+          <strong class="text-gray-200">Rechtsgrundlage:</strong>
+          Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung) bzw. Art. 6 Abs. 1 lit. f DSGVO
+          (berechtigtes Interesse an der Beantwortung von Anfragen).
+        </p>
+        <p>
+          <strong class="text-gray-200">Speicherdauer:</strong>
+          Anfragedaten werden nach Abschluss der Bearbeitung und Ablauf gesetzlicher
+          Aufbewahrungsfristen gelöscht. Hochgeladene Dateien werden nach Abschluss des
+          Projekts bzw. auf Wunsch sofort gelöscht.
+        </p>
+        <p>
+          Zum Schutz vor Missbrauch wird die Anzahl der Formulareinsendungen pro IP-Adresse
+          technisch begrenzt (Rate-Limiting). Dabei wird die IP-Adresse vorübergehend im
+          Arbeitsspeicher des Servers gespeichert und nicht dauerhaft protokolliert.
+        </p>
+      </div>
+    </section>
+
+    {# 4. E-Mail-Kommunikation #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        4. E-Mail-Kommunikation
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>
+          Wenn du uns eine E-Mail schickst, werden die von dir übermittelten Daten
+          (E-Mail-Adresse, Name, Inhalt) zur Bearbeitung deiner Anfrage gespeichert.
+          Diese Daten geben wir nicht ohne deine Einwilligung an Dritte weiter.
+        </p>
+        <p>
+          <strong class="text-gray-200">Rechtsgrundlage:</strong>
+          Art. 6 Abs. 1 lit. f DSGVO.
+        </p>
+      </div>
+    </section>
+
+    {# 5. Matomo Analytics #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        5. Webanalyse mit Matomo
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>
+          Diese Website nutzt <strong class="text-white">Matomo</strong> (ehemals Piwik),
+          eine Open-Source-Software zur statistischen Auswertung von Besucherzugriffen.
+          Matomo wird ausschließlich auf unserem eigenen Server in Deutschland betrieben —
+          es werden <strong class="text-white">keine Daten an Dritte übertragen</strong>.
+        </p>
+
+        <p>Matomo erfasst folgende Daten:</p>
+        <ul class="list-none space-y-1 pl-4">
+          {% for item in [
+            'Anonymisierte IP-Adresse (letztes Oktett wird vor Speicherung gelöscht)',
+            'Aufgerufene Seiten und Verweildauer',
+            'Herkunft des Besuchs (z. B. Suchmaschine, direkter Aufruf)',
+            'Verwendeter Browser und Betriebssystem (allgemein)',
+            'Bildschirmauflösung (allgemein)',
+          ] %}
+          <li class="flex items-start gap-2">
+            <span class="text-[#8B2FC9] flex-shrink-0 mt-0.5">▸</span>
+            <span>{{ item }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <div class="flex items-start gap-3 mt-2 p-3 rounded-lg bg-[#39FF14]/5
+                    border border-[#39FF14]/20">
+          <span class="text-[#39FF14] text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="text-white text-xs font-medium mb-1">Cookielos — kein Banner nötig</p>
+            <p class="text-gray-400 text-xs">
+              Matomo wird ohne Cookies betrieben. Es werden keine Tracking-Cookies
+              gesetzt. Ebenso wird die „Do Not Track"-Einstellung des Browsers
+              automatisch respektiert.
+            </p>
+          </div>
+        </div>
+
+        <p>
+          <strong class="text-gray-200">Rechtsgrundlage:</strong>
+          Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Verbesserung
+          des Angebots). Da keine personenbezogenen Daten gespeichert werden und
+          kein Tracking über Sitzungsgrenzen hinaus stattfindet, ist keine
+          Einwilligung erforderlich.
+        </p>
+
+        <p>
+          <strong class="text-gray-200">Widerspruch:</strong>
+          Du kannst die Erfassung jederzeit deaktivieren, indem du
+          Do-Not-Track in deinem Browser aktivierst. Matomo respektiert diese
+          Einstellung automatisch.
+        </p>
+
+        <p class="border-t border-[#8B2FC9]/10 pt-3 text-xs text-gray-500">
+          Technisch notwendige Session-Cookies werden ausschließlich für den
+          CSRF-Schutz des Kontaktformulars verwendet und beim Schließen des
+          Browsers gelöscht.
+        </p>
+      </div>
+    </section>
+
+    {# 6. Externe Ressourcen #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        6. Externe Ressourcen
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>
+          Schriften (JetBrains Mono) und das Matomo-Analyse-Skript werden ausschließlich
+          von unserem eigenen Server geladen. Es werden
+          <strong class="text-white">keine Daten an externe Drittanbieter</strong>
+          wie Google, Facebook oder ähnliche Dienste übertragen.
+        </p>
+        <p class="text-gray-500 text-xs">
+          Hinweis: Der Tailwind CSS-Framework-Code wird derzeit über jsDelivr (Niederlande)
+          geladen. Dabei wird die IP-Adresse einmalig beim Seitenaufruf übermittelt.
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Im Produktionsbetrieb wird
+          Tailwind lokal kompiliert und dieses CDN entfällt vollständig.
+        </p>
+      </div>
+    </section>
+
+    {# 7. Deine Rechte #}
+    <section>
+      <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">
+        7. Deine Rechte
+      </h2>
+      <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 space-y-3">
+        <p>Du hast gegenüber uns folgende Rechte bezüglich deiner personenbezogenen Daten:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+          {% for right in [
+            ('Auskunft', 'Art. 15 DSGVO'),
+            ('Berichtigung', 'Art. 16 DSGVO'),
+            ('Löschung', 'Art. 17 DSGVO'),
+            ('Einschränkung der Verarbeitung', 'Art. 18 DSGVO'),
+            ('Datenübertragbarkeit', 'Art. 20 DSGVO'),
+            ('Widerspruch', 'Art. 21 DSGVO'),
+          ] %}
+          <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-[#130820] border border-[#8B2FC9]/10">
+            <span class="text-[#39FF14] flex-shrink-0">▸</span>
+            <div>
+              <p class="text-gray-200 text-xs font-medium">{{ right[0] }}</p>
+              <p class="text-gray-600 text-xs">{{ right[1] }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="mt-3">
+          Außerdem hast du das Recht, dich bei der zuständigen Aufsichtsbehörde zu beschweren.
+          In Berlin ist das die
+          <strong class="text-gray-200">Berliner Beauftragte für Datenschutz und
+          Informationsfreiheit</strong>.
+        </p>
+        <p>
+          Um deine Rechte auszuüben, wende dich an:
+          <a href="mailto:info@stumpfmeista3d.de"
+             class="text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            info@stumpfmeista3d.de
+          </a>
+        </p>
+      </div>
+    </section>
+
+    {# Stand #}
+    <p class="text-gray-600 text-xs pt-4 border-t border-[#8B2FC9]/10">
+      Stand: März 2026
+    </p>
+
+  </div>
+</main>
+
+{# Footer #}
+<footer class="bg-[#130820] border-t border-[#8B2FC9]/20 py-8 px-6 mt-8">
+  <div class="max-w-3xl mx-auto flex gap-6 text-xs text-gray-600">
+    <a href="{{ url_for('core.impressum') }}" class="hover:text-gray-400 transition-colors">Impressum</a>
+    <a href="{{ url_for('core.datenschutz') }}" class="text-[#39FF14]">Datenschutz</a>
+  </div>
+</footer>
+
+{% endblock %}

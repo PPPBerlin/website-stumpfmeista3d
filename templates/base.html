@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  {# --- SEO Meta --- #}
+  <title>{% block title %}Stumpfmeista3D – 3D-Druck & IT-Service Berlin{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}3D-Druck & IT-Service aus Berlin. Von der Beratung über die Konstruktion bis zum fertigen Ersatzteil.{% endblock %}" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{{ request.url }}" />
+
+  {# --- Open Graph --- #}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{% block og_title %}Stumpfmeista3D{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}3D-Druck & IT-Service aus Berlin.{% endblock %}" />
+  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:image" content="{{ url_for('static', filename='img/og-image.png', _external=True) }}" />
+
+  {# --- Tailwind CSS (CDN für Dev; im Prod durch kompiliertes CSS ersetzen) --- #}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neon:   '#39FF14',
+            purple: '#8B2FC9',
+            dark:   '#1C0D28',
+            darker: '#130820',
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            neon:   '0 0 8px #39FF14, 0 0 24px #39FF1440',
+            purple: '0 0 8px #8B2FC9, 0 0 24px #8B2FC940',
+          },
+        },
+      },
+    }
+  </script>
+
+  {# --- JetBrains Mono — selbst gehostet (kein Google Fonts, DSGVO-konform) --- #}
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url("{{ url_for('static', filename='fonts/JetBrainsMono-Regular.woff2') }}") format('woff2');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url("{{ url_for('static', filename='fonts/JetBrainsMono-SemiBold.woff2') }}") format('woff2');
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url("{{ url_for('static', filename='fonts/JetBrainsMono-Bold.woff2') }}") format('woff2');
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+  </style>
+
+  <style>
+    body { font-family: 'JetBrains Mono', monospace; }
+
+    /* Neon-Glow Hilfsklassen */
+    .neon-text  { color: #39FF14; text-shadow: 0 0 8px #39FF14, 0 0 24px #39FF1480; }
+    .purple-text{ color: #8B2FC9; text-shadow: 0 0 8px #8B2FC9, 0 0 20px #8B2FC960; }
+    .neon-border{ border-color: #39FF14; box-shadow: 0 0 6px #39FF14, 0 0 18px #39FF1440; }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #130820; }
+    ::-webkit-scrollbar-thumb { background: #8B2FC9; border-radius: 3px; }
+
+    /* Scan-line Overlay für Tech-Look */
+    .scanlines::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+
+  {# ===== Matomo Analytics — cookielos, kein Banner nötig ===== #}
+  {% if matomo_url and matomo_site_id %}
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(['disableCookies']);           // kein Cookie → kein Banner nötig
+    _paq.push(['setDoNotTrack', true]);     // Do-Not-Track Browser-Setting respektieren
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u = '{{ matomo_url }}/';
+      _paq.push(['setTrackerUrl', u + 'matomo.php']);
+      _paq.push(['setSiteId', '{{ matomo_site_id }}']);
+      var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+      g.async = true;
+      g.src = u + 'matomo.js';
+      s.parentNode.insertBefore(g, s);
+    })();
+  </script>
+  <noscript>
+    <img src="{{ matomo_url }}/matomo.php?idsite={{ matomo_site_id }}&amp;rec=1"
+         style="border:0;" alt="" width="1" height="1" />
+  </noscript>
+  {% endif %}
+</head>
+<body class="bg-[#1C0D28] text-gray-100 antialiased">
+
+  {% block body %}{% endblock %}
+
+  {# Flash-Messages (für Admin-Bereich) #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div id="flash-container" class="fixed top-4 right-4 z-50 space-y-2">
+        {% for category, message in messages %}
+          <div class="px-4 py-3 rounded-lg text-sm font-mono border
+            {% if category == 'success' %}bg-green-900/80 border-[#39FF14] text-[#39FF14]
+            {% elif category == 'error' %}bg-red-900/80 border-red-400 text-red-300
+            {% else %}bg-gray-800 border-gray-500 text-gray-300{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      <script>
+        setTimeout(() => {
+          document.getElementById('flash-container')?.remove();
+        }, 4000);
+      </script>
+    {% endif %}
+  {% endwith %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

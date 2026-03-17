@@ -1,0 +1,90 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+  <p class="text-gray-600 text-sm mt-1">Willkommen zurück.</p>
+</div>
+
+{# Stats Cards #}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+  <div class="bg-[#1C0D28] border border-[#39FF14]/20 rounded-xl p-6">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Kunden gesamt</p>
+    <p class="text-4xl font-bold text-[#39FF14]"
+       style="text-shadow: 0 0 12px #39FF14;">{{ stats.customers }}</p>
+    <a href="{{ url_for('admin.customers') }}" class="text-xs text-gray-600 hover:text-[#39FF14] mt-2 block">
+      Alle ansehen →
+    </a>
+  </div>
+
+  <div class="bg-[#1C0D28] border border-[#8B2FC9]/30 rounded-xl p-6">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Neue Anfragen</p>
+    <p class="text-4xl font-bold text-[#8B2FC9]"
+       style="text-shadow: 0 0 12px #8B2FC9;">{{ stats.open_inquiries }}</p>
+    <a href="{{ url_for('admin.inquiries') }}" class="text-xs text-gray-600 hover:text-[#8B2FC9] mt-2 block">
+      Anfragen ansehen →
+    </a>
+  </div>
+
+  <div class="bg-[#1C0D28] border border-[#39FF14]/20 rounded-xl p-6">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Aktive Projekte</p>
+    <p class="text-4xl font-bold text-[#39FF14]"
+       style="text-shadow: 0 0 12px #39FF14;">{{ stats.active_projects }}</p>
+    <a href="{{ url_for('admin.projects') }}" class="text-xs text-gray-600 hover:text-[#39FF14] mt-2 block">
+      Projekte ansehen →
+    </a>
+  </div>
+</div>
+
+{# Letzte Anfragen #}
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6">
+  <div class="flex justify-between items-center mb-5">
+    <h2 class="font-bold text-white">Letzte Anfragen</h2>
+    <a href="{{ url_for('admin.inquiries') }}"
+       class="text-xs text-gray-500 hover:text-[#39FF14] transition-colors">Alle ansehen</a>
+  </div>
+
+  {% if recent_inquiries %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/10">
+        <th class="pb-3 font-normal">Name</th>
+        <th class="pb-3 font-normal">Betreff</th>
+        <th class="pb-3 font-normal">Status</th>
+        <th class="pb-3 font-normal">Datum</th>
+        <th class="pb-3 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for inquiry in recent_inquiries %}
+      <tr class="hover:bg-white/2 transition-colors">
+        <td class="py-3 text-gray-300">{{ inquiry.first_name }} {{ inquiry.last_name }}</td>
+        <td class="py-3 text-gray-400 max-w-xs truncate">{{ inquiry.subject }}</td>
+        <td class="py-3">
+          <span class="px-2 py-0.5 rounded text-xs
+            {% if inquiry.status == 'Neu' %}bg-[#39FF14]/15 text-[#39FF14]
+            {% elif inquiry.status == 'Gelesen' %}bg-yellow-900/40 text-yellow-400
+            {% else %}bg-gray-800 text-gray-500{% endif %}">
+            {{ inquiry.status }}
+          </span>
+        </td>
+        <td class="py-3 text-gray-600 text-xs">
+          {{ inquiry.created_at.strftime('%d.%m.%Y') }}
+        </td>
+        <td class="py-3">
+          <a href="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}"
+             class="text-xs text-[#8B2FC9] hover:text-[#39FF14] transition-colors">
+            Öffnen →
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="text-gray-600 text-sm text-center py-8">Noch keine Anfragen.</p>
+  {% endif %}
+</div>
+{% endblock %}

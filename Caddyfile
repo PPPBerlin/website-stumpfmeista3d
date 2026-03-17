@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------------------
+# Cloudflare Tunnel liefert Traffic als HTTP an Port 8080 (localhost).
+# Caddy übernimmt hier das interne Routing per Hostname.
+# SSL wird komplett von Cloudflare gehandelt — kein ACME/Let's Encrypt nötig.
+# ---------------------------------------------------------------------------
+
+# Hauptseite
+stumpfmeista3d.org {
+    reverse_proxy web:5000
+
+    encode gzip
+
+    header {
+        # Sicherheitsheader (Cloudflare leitet diese an den Browser weiter)
+        X-Frame-Options DENY
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        X-XSS-Protection "1; mode=block"
+        # Sicherstellen dass Traffic nur über Cloudflare kommt
+        -Server
+    }
+}
+
+# www → non-www (Cloudflare regelt das primär, Fallback hier)
+www.stumpfmeista3d.org {
+    redir https://stumpfmeista3d.org{uri} permanent
+}
+
+# Matomo Analytics
+matomo.stumpfmeista3d.org {
+    reverse_proxy matomo:80
+
+    encode gzip
+
+    header {
+        X-Frame-Options SAMEORIGIN
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        -Server
+    }
+}
+
+# Später: alte .de Domain auf .org umleiten
+# stumpfmeista3d.de {
+#     redir https://stumpfmeista3d.org{uri} permanent
+# }
+# www.stumpfmeista3d.de {
+#     redir https://stumpfmeista3d.org{uri} permanent
+# }

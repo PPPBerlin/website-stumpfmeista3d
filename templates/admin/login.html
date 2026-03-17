@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Stumpfmeista3D</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url("/static/fonts/JetBrainsMono-Regular.woff2") format('woff2');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url("/static/fonts/JetBrainsMono-Bold.woff2") format('woff2');
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+    body { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#130820] text-gray-100 min-h-screen flex items-center justify-center px-4">
+
+<div class="w-full max-w-sm">
+  <div class="text-center mb-8">
+    <p class="text-[#39FF14] font-bold text-lg tracking-widest"
+       style="text-shadow: 0 0 12px #39FF14;">STUMPFMEISTA3D</p>
+    <p class="text-gray-600 text-xs mt-1">Admin-Zugang</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="mb-4 px-4 py-3 rounded-lg text-sm border bg-red-900/40 border-red-500/40 text-red-400">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" class="bg-[#1C0D28] border border-[#8B2FC9]/30 rounded-xl p-8 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div>
+      <label class="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Benutzername</label>
+      <input type="text" name="username" autofocus required
+             class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                    text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                    focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+    </div>
+
+    <div>
+      <label class="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Passwort</label>
+      <input type="password" name="password" required
+             class="w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3
+                    text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]
+                    focus:shadow-[0_0_8px_#39FF1440] transition-all" />
+    </div>
+
+    <button type="submit"
+            class="w-full py-3 bg-[#39FF14] text-[#130820] font-bold rounded-lg
+                   hover:bg-[#39FF14]/90 transition-all shadow-[0_0_16px_#39FF1460]">
+      Einloggen
+    </button>
+  </form>
+</div>
+
+</body>
+</html>

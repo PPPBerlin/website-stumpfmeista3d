@@ -1,0 +1,31 @@
+# Secrets & lokale Config
+.env
+.env.local
+
+# Datenbank
+*.db
+
+# Uploads (Nutzerdateien, nicht im Repo)
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Flask instance-Ordner
+instance/
+
+# Cloudflare Tunnel Credentials (nie committen!)
+*.json
+cloudflare-tunnel.yml
