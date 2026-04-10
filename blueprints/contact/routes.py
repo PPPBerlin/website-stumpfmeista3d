@@ -90,25 +90,35 @@ def send():
 
 
 def _send_notification(inquiry):
-    """Sendet eine E-Mail-Benachrichtigung an den Admin (fire & forget)."""
-    try:
-        from flask_mail import Message
-        from extensions import mail
-        admin_email = current_app.config.get('ADMIN_EMAIL')
-        if not admin_email:
-            return
-        msg = Message(
-            subject=f'[Stumpfmeista3D] Neue Anfrage: {inquiry.subject}',
-            recipients=[admin_email],
-            body=(
-                f'Neue Kontaktanfrage von {inquiry.first_name} {inquiry.last_name}\n'
-                f'E-Mail: {inquiry.email}\n'
-                f'Telefon: {inquiry.phone or "—"}\n\n'
-                f'Betreff: {inquiry.subject}\n\n'
-                f'{inquiry.message}'
-            ),
-        )
-        mail.send(msg)
-    except Exception:
-        # Fehler beim Mailversand sollen die Anfrage nicht blockieren
-        pass
+    """Sendet E-Mail im Hintergrund-Thread — blockiert Gunicorn-Worker nicht."""
+    import threading
+    from flask_mail import Message
+    from extensions import mail
+
+    admin_email = current_app.config.get('ADMIN_EMAIL')
+    if not admin_email:
+        return
+
+    msg = Message(
+        subject=f'[Stumpfmeista3D] Neue Anfrage: {inquiry.subject}',
+        recipients=[admin_email],
+        body=(
+            f'Neue Kontaktanfrage von {inquiry.first_name} {inquiry.last_name}\n'
+            f'E-Mail: {inquiry.email}\n'
+            f'Telefon: {inquiry.phone or "—"}\n\n'
+            f'Betreff: {inquiry.subject}\n\n'
+            f'{inquiry.message}'
+        ),
+    )
+
+    # App-Kontext in den Thread mitgeben
+    app = current_app._get_current_object()
+
+    def send_async():
+        with app.app_context():
+            try:
+                mail.send(msg)
+            except Exception as e:
+                app.logger.error(f'Mailversand fehlgeschlagen: {e}')
+
+    threading.Thread(target=send_async, daemon=True).start()
