@@ -78,6 +78,9 @@
       <a href="#services" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Services</a>
       <a href="#process" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Ablauf</a>
       <a href="#about" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Über mich</a>
+      {% if shop_visible %}
+      <a href="{{ url_for('shop.index') }}" class="text-gray-400 hover:text-[#39FF14] transition-colors duration-200">Shop</a>
+      {% endif %}
       <a href="#contact" class="text-[#39FF14] border border-[#39FF14]/50 px-4 py-1 rounded
                                 hover:bg-[#39FF14]/10 transition-all duration-200"
          style="text-shadow: 0 0 8px #39FF14;">
@@ -97,6 +100,9 @@
     <a href="#services" class="block py-2 text-gray-400 hover:text-[#39FF14]">Services</a>
     <a href="#process" class="block py-2 text-gray-400 hover:text-[#39FF14]">Ablauf</a>
     <a href="#about" class="block py-2 text-gray-400 hover:text-[#39FF14]">Über mich</a>
+    {% if shop_visible %}
+    <a href="{{ url_for('shop.index') }}" class="block py-2 text-gray-400 hover:text-[#39FF14]">Shop</a>
+    {% endif %}
     <a href="#contact" class="block py-2 text-[#39FF14]">Anfrage stellen</a>
   </div>
 </nav>
@@ -457,23 +463,7 @@ Maße oder Fotos hast du dabei? Je mehr, desto besser..."></textarea>
 </section>
 
 {# ===== FOOTER ===== #}
-<footer class="bg-[#130820] border-t border-[#8B2FC9]/20 py-10 px-6">
-  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-    <div class="text-center md:text-left">
-      <p class="font-bold text-[#39FF14] font-mono" style="text-shadow: 0 0 8px #39FF14;">
-        STUMPFMEISTA3D
-      </p>
-      <p class="text-xs text-gray-600 mt-1">3D-Druck & IT-Service · Berlin</p>
-    </div>
-    <div class="flex gap-6 text-xs text-gray-600">
-      <a href="{{ url_for('core.impressum') }}" class="hover:text-[#39FF14] transition-colors">Impressum</a>
-      <a href="{{ url_for('core.datenschutz') }}" class="hover:text-[#39FF14] transition-colors">Datenschutz</a>
-    </div>
-    <p class="text-xs text-gray-700 font-mono">
-      © {{ now.year if now else '2025' }} Stumpfmeista3D
-    </p>
-  </div>
-</footer>
+{% include '_footer.html' %}
 
 {% endblock %}
 

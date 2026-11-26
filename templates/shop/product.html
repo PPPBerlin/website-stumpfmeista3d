@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} – Stumpfmeista3D Shop{% endblock %}
+{% block meta_description %}{{ product.short_description or product.name }}{% endblock %}
+{% block og_title %}{{ product.name }}{% endblock %}
+{% block og_description %}{{ product.short_description or product.name }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": product.name,
+  "description": product.short_description or product.name,
+  "image": [site_url ~ url_for('shop.product_image', filename=product.cover_image.filename)] if product.cover_image else [],
+  "brand": {"@type": "Brand", "name": "Stumpfmeista3D"},
+  "offers": {
+    "@type": "AggregateOffer" if product.has_price_range else "Offer",
+    "priceCurrency": "EUR",
+    ("lowPrice" if product.has_price_range else "price"): "%.2f" % (product.min_price_cents / 100),
+    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else "https://schema.org/InStock",
+    "url": site_url ~ url_for('shop.product', slug=product.slug)
+  }
+} | tojson }}
+</script>
+{% endblock %}
+
+{% block body %}
+{% include '_subnav.html' %}
+
+<main class="max-w-6xl mx-auto px-6 py-10">
+  <a href="{{ url_for('shop.index') }}" class="text-xs text-gray-500 hover:text-[#39FF14] transition-colors">← Alle Produkte</a>
+
+  {% if not product.is_active %}
+  <p class="mt-4 px-4 py-2 rounded-lg bg-yellow-900/40 text-yellow-300 text-xs">Entwurf — nur für Admins sichtbar.</p>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-6">
+    {# Galerie #}
+    <div>
+      <div class="aspect-square bg-[#130820] border border-[#8B2FC9]/25 rounded-xl overflow-hidden">
+        {% if product.images %}
+        <img id="main-image" src="{{ url_for('shop.product_image', filename=product.images[0].filename) }}"
+             alt="{{ product.images[0].alt or product.name }}" class="w-full h-full object-cover" />
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center text-[#8B2FC9]/40 text-7xl">◈</div>
+        {% endif %}
+      </div>
+      {% if product.images | length > 1 %}
+      <div class="grid grid-cols-5 gap-2 mt-3">
+        {% for img in product.images %}
+        <button type="button" data-src="{{ url_for('shop.product_image', filename=img.filename) }}"
+                data-alt="{{ img.alt or product.name }}"
+                class="thumb aspect-square rounded-lg overflow-hidden border {% if loop.first %}border-[#39FF14]{% else %}border-[#8B2FC9]/30{% endif %} hover:border-[#39FF14] transition-colors"
+                aria-label="Bild {{ loop.index }} anzeigen">
+          <img src="{{ url_for('shop.product_image', filename=img.filename) }}" alt="" loading="lazy" class="w-full h-full object-cover" />
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# Infos + Kauf #}
+    <div>
+      <h1 class="text-3xl font-bold text-white">{{ product.name }}</h1>
+      {% if product.short_description %}
+      <p class="text-gray-400 mt-2">{{ product.short_description }}</p>
+      {% endif %}
+
+      <p id="price" class="text-3xl font-bold text-[#39FF14] mt-6" style="text-shadow: 0 0 10px #39FF1460;">
+        {{ (variants[0].effective_price_cents if variants else product.price_cents) | euro }}
+      </p>
+      {% include 'shop/_price_note.html' %}
+
+      <form method="POST" action="{{ url_for('shop.cart_add') }}" class="mt-8 space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {% if variants | length > 1 %}
+        <fieldset>
+          <legend class="block text-xs text-gray-400 uppercase tracking-wider mb-2">{{ product.variant_label }}</legend>
+          <div class="flex flex-wrap gap-2">
+            {% set first_available = (variants | selectattr('stock', 'gt', 0) | first) %}
+            {% for v in variants %}
+            <label class="cursor-pointer">
+              <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
+                     data-price="{{ v.effective_price_cents | euro }}" data-stock="{{ v.stock }}"
+                     data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
+                     {% if v.stock <= 0 %}disabled{% endif %}
+                     {% if first_available and v.id == first_available.id %}checked{% endif %} />
+              <span class="block px-4 py-2 rounded-lg border text-sm transition-all
+                           border-[#8B2FC9]/40 text-gray-300
+                           peer-checked:border-[#39FF14] peer-checked:text-[#39FF14] peer-checked:bg-[#39FF14]/10
+                           peer-disabled:opacity-40 peer-disabled:line-through peer-disabled:cursor-not-allowed
+                           peer-focus-visible:ring-2 peer-focus-visible:ring-[#39FF14]">
+                {{ v.name }}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        {% elif variants %}
+        <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
+               data-price="{{ variants[0].effective_price_cents | euro }}" data-stock="{{ variants[0].stock }}"
+               data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
+        {% endif %}
+
+        <p id="stock-info" class="text-sm"></p>
+
+        {% if not product.is_sold_out %}
+        <div class="flex gap-3">
+          <label for="qty" class="sr-only">Menge</label>
+          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_PER_ITEM }}"
+                 class="w-20 bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-3 text-center text-gray-100 focus:outline-none focus:border-[#39FF14]" />
+          <button type="submit" id="add-btn"
+                  class="flex-1 py-3 bg-[#39FF14] text-[#130820] font-bold rounded-lg hover:bg-[#39FF14]/90 transition-all
+                         shadow-[0_0_20px_#39FF1460] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+            In den Warenkorb
+          </button>
+        </div>
+        {% else %}
+        <p class="py-3 text-center rounded-lg border border-gray-700 text-gray-400">Leider ausverkauft</p>
+        {% endif %}
+      </form>
+
+      <p class="mt-5 text-sm text-gray-400 flex items-center gap-2">
+        <span class="text-[#39FF14]">▸</span> Lieferzeit: {{ product.delivery_time }}
+      </p>
+      <p class="mt-1 text-sm text-gray-400 flex items-center gap-2">
+        <span class="text-[#39FF14]">▸</span> Versand innerhalb Deutschlands
+      </p>
+
+      {% if product.description %}
+      <div class="mt-10 border-t border-[#8B2FC9]/20 pt-6">
+        <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">Beschreibung</h2>
+        <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">{{ product.description }}</div>
+      </div>
+      {% endif %}
+      <div class="mt-10 border-t border-[#8B2FC9]/20 pt-6">
+        <h2 class="text-xs text-[#8B2FC9] uppercase tracking-widest mb-3 font-mono">Produktsicherheit</h2>
+        <dl class="text-sm space-y-2">
+          <div class="flex gap-4"><dt class="text-gray-500 w-32 shrink-0">Artikelnummer</dt><dd id="sku" class="text-gray-300 font-mono">–</dd></div>
+          {% if product.material %}<div class="flex gap-4"><dt class="text-gray-500 w-32 shrink-0">Material</dt><dd class="text-gray-300">{{ product.material }}</dd></div>{% endif %}
+          <div class="flex gap-4"><dt class="text-gray-500 w-32 shrink-0">Hersteller</dt>
+            <dd class="text-gray-300">Paul-Philipp Pürst – Stumpfmeista3D<br>Wolfsgartenstraße 6, 12555 Berlin<br>info@stumpfmeista3d.de</dd></div>
+          {% if product.safety_info %}
+          <div class="flex gap-4"><dt class="text-gray-500 w-32 shrink-0">Hinweise</dt>
+            <dd class="text-yellow-300/90 whitespace-pre-line">{{ product.safety_info }}</dd></div>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% include '_footer.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Galerie
+  document.querySelectorAll('.thumb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const main = document.getElementById('main-image');
+      main.src = btn.dataset.src; main.alt = btn.dataset.alt;
+      document.querySelectorAll('.thumb').forEach(b => b.classList.replace('border-[#39FF14]', 'border-[#8B2FC9]/30'));
+      btn.classList.replace('border-[#8B2FC9]/30', 'border-[#39FF14]');
+    });
+  });
+
+  // Preis + Bestand je Variante
+  const maxQty = {{ config.SHOP_MAX_QTY_PER_ITEM }};
+  function updateVariant() {
+    const sel = document.querySelector('input[name="variant_id"]:checked') ||
+                document.querySelector('input[type="hidden"][name="variant_id"]');
+    const info = document.getElementById('stock-info');
+    const qty = document.getElementById('qty');
+    const btn = document.getElementById('add-btn');
+    if (!sel) {
+      if (btn) btn.disabled = true;
+      const first = document.querySelector('input[name="variant_id"]');
+      if (first) document.getElementById('sku').textContent = first.dataset.sku;
+      return;
+    }
+    document.getElementById('price').textContent = sel.dataset.price;
+    document.getElementById('sku').textContent = sel.dataset.sku;
+    const stock = parseInt(sel.dataset.stock, 10);
+    if (qty) { qty.max = Math.min(stock, maxQty); if (+qty.value > +qty.max) qty.value = qty.max; }
+    if (btn) btn.disabled = stock <= 0;
+    if (stock <= 0) { info.textContent = 'Ausverkauft'; info.className = 'text-sm text-gray-500'; }
+    else if (stock <= 3) { info.textContent = `Nur noch ${stock} verfügbar`; info.className = 'text-sm text-yellow-400'; }
+    else { info.textContent = 'Auf Lager'; info.className = 'text-sm text-[#39FF14]'; }
+  }
+  document.querySelectorAll('input[name="variant_id"]').forEach(r => r.addEventListener('change', updateVariant));
+  updateVariant();
+</script>
+{% endblock %}

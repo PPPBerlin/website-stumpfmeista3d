@@ -1,0 +1,197 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ product.name if product else 'Neues Produkt' }}{% endblock %}
+
+{% set input_cls = "w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440] transition-all placeholder-gray-700" %}
+{% set small_cls = "w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14] placeholder-gray-700" %}
+{% set label_cls = "block text-xs text-gray-500 uppercase tracking-wider mb-1.5" %}
+{% macro val(field, default='') -%}
+  {{ form.get(field) if form.get(field) is not none else ((product|attr(field)) if product and (product|attr(field)) is not none else default) }}
+{%- endmacro %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <a href="{{ url_for('admin.products') }}" class="text-xs text-gray-600 hover:text-gray-400">← Produkte</a>
+  {% if product %}
+  <a href="{{ url_for('shop.product', slug=product.slug) }}" target="_blank" class="text-xs text-[#8B2FC9] hover:text-[#39FF14]">Im Shop ansehen ↗</a>
+  {% endif %}
+</div>
+
+<h1 class="text-2xl font-bold text-white mb-8">{{ product.name if product else 'Neues Produkt anlegen' }}</h1>
+
+<form method="POST" enctype="multipart/form-data" class="space-y-8 max-w-4xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  {# Grunddaten #}
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <h2 class="text-sm font-bold text-white">Grunddaten</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="{{ label_cls }}" for="name">Name <span class="text-[#39FF14]">*</span></label>
+        <input id="name" type="text" name="name" required value="{{ val('name') }}" class="{{ input_cls }}" placeholder="z. B. Kabelhalter Set" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="{{ label_cls }}" for="short_description">Kurzbeschreibung</label>
+        <input id="short_description" type="text" name="short_description" maxlength="300" value="{{ val('short_description') }}" class="{{ input_cls }}" placeholder="Ein Satz für die Produktkarte" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="{{ label_cls }}" for="description">Beschreibung</label>
+        <textarea id="description" name="description" rows="8" class="{{ input_cls }}" placeholder="Material, Maße, Pflegehinweise, Lieferumfang …">{{ val('description') }}</textarea>
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="price">Preis (€) <span class="text-[#39FF14]">*</span></label>
+        <input id="price" type="text" inputmode="decimal" name="price" required
+               value="{{ form.get('price') or (cents_to_input(product.price_cents) if product else '') }}"
+               class="{{ input_cls }}" placeholder="12,90" />
+        <p class="text-xs text-gray-600 mt-1">Gilt für alle Varianten ohne eigenen Preis.</p>
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="delivery_time">Lieferzeit</label>
+        <input id="delivery_time" type="text" name="delivery_time" value="{{ val('delivery_time', '3–5 Werktage') }}" class="{{ input_cls }}" />
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="slug">URL-Name</label>
+        <input id="slug" type="text" name="slug" value="{{ val('slug') }}" class="{{ input_cls }}" placeholder="wird aus dem Namen erzeugt" />
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="sort_order">Reihenfolge</label>
+        <input id="sort_order" type="number" name="sort_order" value="{{ val('sort_order', 0) }}" class="{{ input_cls }}" />
+      </div>
+    </div>
+    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer">
+      <input type="checkbox" name="is_active" value="1" class="w-4 h-4 accent-[#39FF14]"
+             {% if (product and product.is_active) or form.get('is_active') %}checked{% endif %} />
+      Aktiv (im Shop sichtbar)
+    </label>
+  </section>
+
+  {# Produktsicherheit (GPSR) #}
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <div>
+      <h2 class="text-sm font-bold text-white">Produktsicherheit (GPSR)</h2>
+      <p class="text-xs text-gray-600 mt-1">Hersteller und Artikelnummer (SKU der Variante) werden automatisch auf der Produktseite angezeigt.</p>
+    </div>
+    <div>
+      <label class="{{ label_cls }}" for="material">Material</label>
+      <input id="material" type="text" name="material" value="{{ val('material') }}" class="{{ input_cls }}" placeholder="z. B. PETG" />
+    </div>
+    <div>
+      <label class="{{ label_cls }}" for="safety_info">Sicherheits- und Warnhinweise</label>
+      <textarea id="safety_info" name="safety_info" rows="3" class="{{ input_cls }}"
+                placeholder="z. B. Kein Spielzeug. Enthält verschluckbare Kleinteile – nicht für Kinder unter 3 Jahren geeignet. Nicht für Lebensmittelkontakt geeignet. Nicht über 70 °C erhitzen.">{{ val('safety_info') }}</textarea>
+      <p class="text-xs text-gray-600 mt-1">Leer lassen nur, wenn es wirklich keine Hinweise gibt.</p>
+    </div>
+  </section>
+
+  {# Varianten #}
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
+      <div>
+        <h2 class="text-sm font-bold text-white">Varianten & Bestand</h2>
+        <p class="text-xs text-gray-600 mt-1">Ohne Varianten: eine Zeile „Standard“ verwenden — dann wird keine Auswahl angezeigt.</p>
+      </div>
+      <div class="sm:w-48">
+        <label class="{{ label_cls }}" for="variant_label">Bezeichnung der Auswahl</label>
+        <input id="variant_label" type="text" name="variant_label" value="{{ val('variant_label', 'Farbe') }}" class="{{ small_cls }}" />
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[40rem]">
+        <thead>
+          <tr class="text-left text-xs text-gray-600">
+            <th class="pb-2 font-normal">Name *</th>
+            <th class="pb-2 font-normal w-28">Preis (leer = Standard)</th>
+            <th class="pb-2 font-normal w-20">Bestand</th>
+            <th class="pb-2 font-normal w-28">SKU</th>
+            <th class="pb-2 font-normal w-14 text-center">Aktiv</th>
+            <th class="pb-2 font-normal w-14 text-center">Löschen</th>
+          </tr>
+        </thead>
+        <tbody id="variant-rows">
+          {% set variants = product.variants if product else [] %}
+          {% for v in variants %}
+          <tr>
+            <td class="pr-2 py-1"><input type="hidden" name="variants-{{ loop.index0 }}-id" value="{{ v.id }}" />
+              <input type="text" name="variants-{{ loop.index0 }}-name" value="{{ v.name }}" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-{{ loop.index0 }}-price" value="{{ cents_to_input(v.price_cents) }}" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="number" min="0" name="variants-{{ loop.index0 }}-stock" value="{{ v.stock }}" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="text" name="variants-{{ loop.index0 }}-sku" value="{{ v.sku or '' }}" class="{{ small_cls }}" /></td>
+            <td class="py-1 text-center"><input type="checkbox" name="variants-{{ loop.index0 }}-active" value="1" class="w-4 h-4 accent-[#39FF14]" {% if v.is_active %}checked{% endif %} /></td>
+            <td class="py-1 text-center"><input type="checkbox" name="variants-{{ loop.index0 }}-delete" value="1" class="w-4 h-4 accent-red-500" /></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td class="pr-2 py-1"><input type="text" name="variants-0-name" value="Standard" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-0-price" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="number" min="0" name="variants-0-stock" value="1" class="{{ small_cls }}" /></td>
+            <td class="pr-2 py-1"><input type="text" name="variants-0-sku" class="{{ small_cls }}" /></td>
+            <td class="py-1 text-center"><input type="checkbox" name="variants-0-active" value="1" class="w-4 h-4 accent-[#39FF14]" checked /></td>
+            <td class="py-1 text-center"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="button" id="add-variant" class="text-xs text-[#39FF14] border border-[#39FF14]/40 px-3 py-1.5 rounded-lg hover:bg-[#39FF14]/10">+ Variante</button>
+  </section>
+
+  {# Bilder #}
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <div>
+      <h2 class="text-sm font-bold text-white">Bilder</h2>
+      <p class="text-xs text-gray-600 mt-1">Das Bild mit der kleinsten Position ist das Titelbild. JPG, PNG oder WebP, quadratisch sieht am besten aus.</p>
+    </div>
+    {% if product and product.images %}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {% for img in product.images %}
+      <div class="bg-[#130820] border border-[#8B2FC9]/20 rounded-lg p-2 space-y-2">
+        <img src="{{ url_for('shop.product_image', filename=img.filename) }}" alt="" class="w-full aspect-square object-cover rounded" />
+        <input type="number" name="image-{{ img.id }}-position" value="{{ img.position }}" class="{{ small_cls }}" aria-label="Position" />
+        <input type="text" name="image-{{ img.id }}-alt" value="{{ img.alt or '' }}" placeholder="Bildbeschreibung" class="{{ small_cls }}" />
+        <label class="flex items-center gap-2 text-xs text-red-400"><input type="checkbox" name="image-{{ img.id }}-delete" value="1" class="accent-red-500" /> löschen</label>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <input type="file" name="images" multiple accept=".jpg,.jpeg,.png,.webp"
+           class="block text-sm text-gray-400 file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-[#8B2FC9]/30 file:text-gray-200 hover:file:bg-[#8B2FC9]/50" />
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <button type="submit" class="px-8 py-3 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg hover:bg-[#39FF14]/90 shadow-[0_0_12px_#39FF1440]">
+      {{ 'Speichern' if product else 'Anlegen' }}
+    </button>
+    <a href="{{ url_for('admin.products') }}" class="px-8 py-3 border border-[#8B2FC9]/40 text-gray-400 text-sm rounded-lg hover:border-[#8B2FC9]">Abbrechen</a>
+  </div>
+</form>
+
+{% if product %}
+<form method="POST" action="{{ url_for('admin.product_delete', product_id=product.id) }}" class="mt-12 max-w-4xl border-t border-red-900/40 pt-6"
+      onsubmit="return this.querySelector('[name=confirm]').checked">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <label class="flex items-center gap-2 text-xs text-gray-500 mb-3"><input type="checkbox" name="confirm" class="accent-red-500" /> Ja, Produkt wirklich löschen</label>
+  <button type="submit" class="px-4 py-2 border border-red-800 text-red-400 text-xs rounded-lg hover:bg-red-900/30">Produkt löschen</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('add-variant').addEventListener('click', () => {
+    const body = document.getElementById('variant-rows');
+    const idx = Date.now();
+    const cls = {{ small_cls | tojson }};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="pr-2 py-1"><input type="text" name="variants-${idx}-name" class="${cls}" placeholder="z. B. Schwarz" /></td>
+      <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-${idx}-price" class="${cls}" /></td>
+      <td class="pr-2 py-1"><input type="number" min="0" name="variants-${idx}-stock" value="1" class="${cls}" /></td>
+      <td class="pr-2 py-1"><input type="text" name="variants-${idx}-sku" class="${cls}" /></td>
+      <td class="py-1 text-center"><input type="checkbox" name="variants-${idx}-active" value="1" class="w-4 h-4 accent-[#39FF14]" checked /></td>
+      <td class="py-1 text-center"><button type="button" class="text-red-400 text-lg" aria-label="Zeile entfernen">×</button></td>`;
+    tr.querySelector('button').addEventListener('click', () => tr.remove());
+    body.appendChild(tr);
+    tr.querySelector('input').focus();
+  });
+</script>
+{% endblock %}

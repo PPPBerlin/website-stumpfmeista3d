@@ -38,6 +38,26 @@
   </div>
 </div>
 
+{# Shop #}
+{% if stats.orders_to_ship or stats.open_withdrawals %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+  {% if stats.orders_to_ship %}
+  <a href="{{ url_for('admin.orders', status='Bezahlt') }}"
+     class="bg-[#1C0D28] border border-[#39FF14]/40 rounded-xl p-6 hover:border-[#39FF14] transition-colors">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Bestellungen zu versenden</p>
+    <p class="text-4xl font-bold text-[#39FF14]" style="text-shadow: 0 0 12px #39FF14;">{{ stats.orders_to_ship }}</p>
+  </a>
+  {% endif %}
+  {% if stats.open_withdrawals %}
+  <a href="{{ url_for('admin.orders') }}"
+     class="bg-[#1C0D28] border border-red-500/40 rounded-xl p-6 hover:border-red-400 transition-colors">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Offene Widerrufe</p>
+    <p class="text-4xl font-bold text-red-400">{{ stats.open_withdrawals }}</p>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
 {# Letzte Anfragen #}
 <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6">
   <div class="flex justify-between items-center mb-5">

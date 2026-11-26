@@ -1,0 +1,46 @@
+Hallo {{ order.name or '' }},
+
+vielen Dank für deine Bestellung bei Stumpfmeista3D! Deine Zahlung ist eingegangen,
+der Kaufvertrag ist damit geschlossen. Diese E-Mail ist deine Bestellbestätigung.
+
+Bestellnummer: {{ order.number }}
+Bestelldatum:  {{ order.paid_at | berlin('%d.%m.%Y') }}
+
+DEINE BESTELLUNG
+{% include 'emails/_order_items.txt' %}
+
+LIEFERADRESSE
+{% include 'emails/_address.txt' %}
+
+Lieferzeit: wie auf der Produktseite angegeben, ab dem Tag nach Zahlungseingang.
+Sobald dein Paket unterwegs ist, bekommst du eine E-Mail mit Sendungsnummer.
+
+Fragen? Antworte einfach auf diese E-Mail.
+
+Viele Grüße
+Paul – Stumpfmeista3D
+
+--
+Paul-Philipp Pürst – Stumpfmeista3D
+Wolfsgartenstraße 6, 12555 Berlin
+info@stumpfmeista3d.de · {{ site_url }}
+
+
+==============================================================
+Die folgenden Vertragsinformationen erhältst du zur Aufbewahrung.
+==============================================================
+
+WIDERRUFSBELEHRUNG
+==================
+
+{% set t %}{% include 'legal/widerruf.txt' %}{% endset %}{{ t | legal_text }}
+
+Widerruf online erklären: {{ site_url }}/vertrag-widerrufen?bestellung={{ order.number }}
+
+{% set t %}{% include 'legal/widerrufsformular.txt' %}{% endset %}{{ t | legal_text }}
+
+
+ALLGEMEINE GESCHÄFTSBEDINGUNGEN
+===============================
+
+{% set t %}{% include 'legal/agb.txt' %}{% endset %}{{ t | legal_text }}

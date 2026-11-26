@@ -1,0 +1,5 @@
+{% for item in order.items %}{{ item.quantity }} x {{ item.display_name }}  —  {{ item.line_total_cents | euro }}
+{% endfor %}Versand  —  {{ order.shipping_cents | euro }}
+------------------------------
+Gesamt   —  {{ order.total_cents | euro }}
+(Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.)

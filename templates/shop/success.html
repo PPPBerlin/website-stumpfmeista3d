@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Danke für deine Bestellung – Stumpfmeista3D{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block body %}
+{% include '_subnav.html' %}
+
+<main class="max-w-2xl mx-auto px-6 py-16">
+  {% if order.status in ('Bezahlt', 'Versendet') %}
+  <p class="text-[#39FF14] text-5xl mb-4" style="text-shadow: 0 0 12px #39FF14;">✓</p>
+  <h1 class="text-3xl font-bold text-white mb-3">Danke für deine Bestellung!</h1>
+  <p class="text-gray-400">
+    Deine Bestellnummer ist <strong class="text-white">{{ order.number }}</strong>.
+    Die Bestellbestätigung ist an <strong class="text-white">{{ order.email }}</strong> unterwegs.
+  </p>
+  {% elif order.status == 'Offen' %}
+  <h1 class="text-3xl font-bold text-white mb-3">Bestellung eingegangen</h1>
+  <p class="text-gray-400">
+    Deine Bestellnummer ist <strong class="text-white">{{ order.number }}</strong>.
+    Die Zahlung wird noch bestätigt (z. B. bei SEPA-Lastschrift). Sobald sie da ist,
+    bekommst du die Bestellbestätigung per E-Mail.
+  </p>
+  {% else %}
+  <h1 class="text-3xl font-bold text-white mb-3">Bestellung nicht abgeschlossen</h1>
+  <p class="text-gray-400">Die Zahlung wurde nicht abgeschlossen. Es wurde nichts berechnet.</p>
+  {% endif %}
+
+  {% if order.status != 'Abgebrochen' %}
+  <div class="mt-10 bg-[#130820] border border-[#8B2FC9]/25 rounded-xl p-6 text-sm">
+    {% for item in order.items %}
+    <div class="flex justify-between py-1.5">
+      <span class="text-gray-300">{{ item.quantity }}× {{ item.display_name }}</span>
+      <span class="text-white">{{ item.line_total_cents | euro }}</span>
+    </div>
+    {% endfor %}
+    <div class="flex justify-between py-1.5 text-gray-400"><span>Versand</span><span>{{ order.shipping_cents | euro }}</span></div>
+    <div class="flex justify-between pt-3 mt-2 border-t border-[#8B2FC9]/20 font-bold">
+      <span class="text-white">Gesamt</span><span class="text-[#39FF14]">{{ order.total_cents | euro }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('shop.index') }}" class="inline-block mt-10 text-sm text-[#8B2FC9] hover:text-[#39FF14]">← Zurück zum Shop</a>
+</main>
+
+{% include '_footer.html' %}
+{% endblock %}

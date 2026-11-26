@@ -2,7 +2,8 @@ from flask import (Blueprint, render_template, redirect, url_for,
                    request, flash, abort, jsonify)
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
-from models import AdminUser, Customer, Inquiry, Project, ProjectFile, PROJECT_STATUSES
+from models import (AdminUser, Customer, Inquiry, Project, ProjectFile, PROJECT_STATUSES,
+                    Order, Withdrawal)
 
 admin_bp = Blueprint('admin', __name__, template_folder='../../templates/admin')
 
@@ -44,6 +45,8 @@ def dashboard():
         'active_projects': Project.query.filter(
             Project.status.notin_(['Abgeschlossen', 'Archiviert'])
         ).count(),
+        'orders_to_ship': Order.query.filter_by(status='Bezahlt').count(),
+        'open_withdrawals': Withdrawal.query.filter_by(is_processed=False).count(),
     }
     recent_inquiries = (Inquiry.query.order_by(Inquiry.created_at.desc())
                         .limit(5).all())
@@ -246,3 +249,7 @@ def project_edit(project_id):
         return redirect(url_for('admin.project_detail', project_id=project.id))
     return render_template('admin/project_form.html', project=project,
                            customers=customers, statuses=PROJECT_STATUSES)
+
+
+# Shop-Verwaltung (Produkte, Bestellungen, Widerrufe) — registriert sich an admin_bp
+from . import shop_routes  # noqa: E402,F401

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Shop – Stumpfmeista3D{% endblock %}
+{% block meta_description %}3D-gedruckte Produkte von Stumpfmeista3D aus Berlin — direkt online bestellen.{% endblock %}
+
+{% block body %}
+{% include '_subnav.html' %}
+
+<main class="max-w-6xl mx-auto px-6 py-14">
+  <div class="mb-10">
+    <p class="text-[#39FF14] text-xs font-mono tracking-widest mb-2" style="text-shadow: 0 0 8px #39FF14;">// SHOP</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-white">Gedruckt in Berlin</h1>
+    <p class="text-gray-400 mt-3 max-w-2xl">
+      Eine kleine Auswahl an 3D-gedruckten Produkten — entworfen, gedruckt und verschickt von mir.
+    </p>
+  </div>
+
+  {% if products %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for p in products %}
+    <a href="{{ url_for('shop.product', slug=p.slug) }}"
+       class="group bg-[#130820] border border-[#8B2FC9]/25 rounded-xl overflow-hidden flex flex-col
+              hover:border-[#39FF14]/60 hover:shadow-[0_0_18px_#39FF1425] transition-all duration-200">
+      <div class="relative aspect-square bg-[#1C0D28] overflow-hidden">
+        {% if p.cover_image %}
+        <img src="{{ url_for('shop.product_image', filename=p.cover_image.filename) }}"
+             alt="{{ p.cover_image.alt or p.name }}" loading="lazy"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if p.is_sold_out %}opacity-50{% endif %}" />
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center text-[#8B2FC9]/40 text-5xl">◈</div>
+        {% endif %}
+        {% if p.is_sold_out %}
+        <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs bg-gray-900/90 text-gray-300 border border-gray-600">Ausverkauft</span>
+        {% endif %}
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        <h2 class="text-white font-bold group-hover:text-[#39FF14] transition-colors">{{ p.name }}</h2>
+        {% if p.short_description %}
+        <p class="text-gray-500 text-sm mt-1 line-clamp-2">{{ p.short_description }}</p>
+        {% endif %}
+        <p class="mt-auto pt-4 text-[#39FF14] font-bold text-lg">
+          {% if p.has_price_range %}<span class="text-xs text-gray-500 font-normal">ab </span>{% endif %}{{ p.min_price_cents | euro }}
+        </p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="mt-8">{% include 'shop/_price_note.html' %}</div>
+  {% else %}
+  <div class="text-center py-24 text-gray-500 border border-dashed border-[#8B2FC9]/30 rounded-xl">
+    <p class="text-4xl mb-3 text-[#8B2FC9]/60">◈</p>
+    <p>Gerade sind keine Produkte im Shop. Schau bald wieder vorbei!</p>
+  </div>
+  {% endif %}
+</main>
+
+{% include '_footer.html' %}
+{% endblock %}

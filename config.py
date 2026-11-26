@@ -30,6 +30,21 @@ class Config:
     MATOMO_URL = os.environ.get('MATOMO_URL', '')       # z.B. https://matomo.stumpfmeista3d.de
     MATOMO_SITE_ID = os.environ.get('MATOMO_SITE_ID', '1')
 
+    # --- Shop ---
+    # Solange False, ist der Shop nur für eingeloggte Admins sichtbar (Vorschau).
+    SHOP_ENABLED = os.environ.get('SHOP_ENABLED', 'false').lower() in ('1', 'true', 'yes')
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    # Versandpauschale in Cent (nur Deutschland)
+    SHOP_SHIPPING_CENTS = int(os.environ.get('SHOP_SHIPPING_CENTS', 495))
+    # Ab diesem Warenwert versandkostenfrei (Cent, 0 = nie)
+    SHOP_FREE_SHIPPING_FROM_CENTS = int(os.environ.get('SHOP_FREE_SHIPPING_FROM_CENTS', 0))
+    SHOP_SHIPPING_LABEL = os.environ.get('SHOP_SHIPPING_LABEL', 'Versand innerhalb Deutschlands')
+    SHOP_MAX_QTY_PER_ITEM = 10
+    # Wie lange der Bestand während des Bezahlvorgangs reserviert bleibt (Stripe: min. 30 Min.)
+    SHOP_CHECKOUT_MINUTES = 30
+    PRODUCT_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
+
     # --- SEO / Site-Metadaten ---
     SITE_NAME = 'Stumpfmeista3D'
     SITE_DESCRIPTION = ('3D-Druck & IT-Service aus Berlin. '

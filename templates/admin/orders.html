@@ -1,0 +1,87 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Bestellungen{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-2xl font-bold text-white">Bestellungen</h1>
+  <p class="text-gray-600 text-sm mt-1">{{ orders|length }} Einträge</p>
+</div>
+
+{% if open_withdrawals %}
+<div class="mb-8 bg-red-950/30 border border-red-500/40 rounded-xl p-6">
+  <h2 class="text-sm font-bold text-red-300 mb-4">Offene Widerrufe ({{ open_withdrawals|length }})</h2>
+  <div class="space-y-3">
+    {% for w in open_withdrawals %}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+      <div>
+        <span class="text-white">{{ w.name }}</span>
+        <span class="text-gray-500">· {{ w.email }} · Bestellung {{ w.order_number }} · {{ w.created_at | berlin('%d.%m.%Y %H:%M') }}</span>
+        {% if w.order %}<a href="{{ url_for('admin.order_detail', order_id=w.order.id) }}" class="text-[#8B2FC9] hover:text-[#39FF14] ml-2">öffnen →</a>
+        {% else %}<span class="text-yellow-400 text-xs ml-2">nicht zugeordnet</span>{% endif %}
+        {% if w.message %}<p class="text-gray-400 text-xs mt-1">{{ w.message }}</p>{% endif %}
+      </div>
+      <form method="POST" action="{{ url_for('admin.withdrawal_done', withdrawal_id=w.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button class="text-xs px-3 py-1.5 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-400">Erledigt</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flex flex-wrap gap-2 mb-6">
+  <a href="{{ url_for('admin.orders') }}"
+     class="px-4 py-1.5 rounded-full text-xs font-medium {% if not status_filter %}bg-[#39FF14]/15 text-[#39FF14] border border-[#39FF14]/30{% else %}text-gray-500 border border-gray-700 hover:border-gray-500{% endif %}">
+    Alle (ohne abgebrochene)
+  </a>
+  {% for s in statuses %}
+  <a href="{{ url_for('admin.orders', status=s) }}"
+     class="px-4 py-1.5 rounded-full text-xs font-medium {% if status_filter == s %}bg-[#8B2FC9]/20 text-[#8B2FC9] border border-[#8B2FC9]/40{% else %}text-gray-500 border border-gray-700 hover:border-gray-500 hover:text-gray-300{% endif %}">
+    {{ s }}
+  </a>
+  {% endfor %}
+</div>
+
+{% macro status_badge(s) -%}
+<span class="px-2.5 py-1 rounded-full text-xs whitespace-nowrap
+  {% if s == 'Bezahlt' %}bg-[#39FF14]/15 text-[#39FF14]
+  {% elif s == 'Versendet' %}bg-[#8B2FC9]/20 text-[#8B2FC9]
+  {% elif s == 'Offen' %}bg-yellow-900/30 text-yellow-400
+  {% elif s == 'Storniert' %}bg-red-900/30 text-red-400
+  {% else %}bg-gray-800 text-gray-500{% endif %}">{{ s }}</span>
+{%- endmacro %}
+
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl overflow-x-auto">
+  {% if orders %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/15 bg-[#130820]">
+        <th class="px-6 py-4 font-normal">Nr.</th>
+        <th class="px-6 py-4 font-normal">Kunde</th>
+        <th class="px-6 py-4 font-normal">Artikel</th>
+        <th class="px-6 py-4 font-normal">Summe</th>
+        <th class="px-6 py-4 font-normal">Status</th>
+        <th class="px-6 py-4 font-normal">Datum</th>
+        <th class="px-6 py-4 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for o in orders %}
+      <tr>
+        <td class="px-6 py-4 text-gray-300 font-mono whitespace-nowrap">{{ o.number }}</td>
+        <td class="px-6 py-4 text-gray-200">{{ o.name or '—' }}<br><span class="text-xs text-gray-600">{{ o.email or '' }}</span></td>
+        <td class="px-6 py-4 text-gray-400 text-xs">{% for i in o.items %}{{ i.quantity }}× {{ i.display_name }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        <td class="px-6 py-4 text-white whitespace-nowrap">{{ o.total_cents | euro }}</td>
+        <td class="px-6 py-4">{{ status_badge(o.status) }}</td>
+        <td class="px-6 py-4 text-gray-600 text-xs whitespace-nowrap">{{ o.created_at | berlin('%d.%m.%Y %H:%M') }}</td>
+        <td class="px-6 py-4 whitespace-nowrap"><a href="{{ url_for('admin.order_detail', order_id=o.id) }}" class="text-xs text-[#8B2FC9] hover:text-[#39FF14]">Öffnen →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="text-center py-16 text-gray-600"><p class="text-4xl mb-3">◆</p><p>Keine Bestellungen.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -16,6 +16,11 @@ services:
       - SITE_URL=${SITE_URL}
       - MATOMO_URL=${MATOMO_URL}
       - MATOMO_SITE_ID=${MATOMO_SITE_ID}
+      - SHOP_ENABLED=${SHOP_ENABLED:-false}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - SHOP_SHIPPING_CENTS=${SHOP_SHIPPING_CENTS:-495}
+      - SHOP_FREE_SHIPPING_FROM_CENTS=${SHOP_FREE_SHIPPING_FROM_CENTS:-0}
     volumes:
       - db_data:/data
       - uploads:/app/uploads

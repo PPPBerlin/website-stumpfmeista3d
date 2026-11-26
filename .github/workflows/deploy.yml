@@ -43,7 +43,8 @@ jobs:
           with app.app_context():
               db.create_all()
           client = app.test_client()
-          routes = ['/', '/impressum', '/datenschutz', '/sitemap.xml', '/robots.txt']
+          routes = ['/', '/impressum', '/datenschutz', '/sitemap.xml', '/robots.txt',
+                    '/agb', '/widerruf', '/versand', '/vertrag-widerrufen']
           for r in routes:
               resp = client.get(r)
               assert resp.status_code == 200, f'FEHLER: GET {r} → {resp.status_code}'
@@ -54,6 +55,9 @@ jobs:
           print('OK  GET /admin/login')
           print('Alle Tests bestanden.')
           "
+
+      - name: Shop End-to-End-Test (Stripe gemockt)
+        run: python tests/shop_e2e.py
 
   # ---------------------------------------------------------------------------
   # Job 2: Docker Image bauen und auf ghcr.io pushen

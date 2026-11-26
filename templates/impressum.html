@@ -23,7 +23,7 @@
   <h1 class="text-3xl font-bold text-white mb-2">Impressum</h1>
   <p class="text-[#39FF14] text-xs font-mono mb-10 tracking-widest"
      style="text-shadow: 0 0 8px #39FF14;">
-    Angaben gemäß § 5 TMG
+    Angaben gemäß § 5 DDG
   </p>
 
   <div class="space-y-10 text-gray-300">
@@ -109,8 +109,8 @@
       </h2>
       <div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 text-sm text-gray-400 leading-relaxed">
         <p>
-          Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten
-          nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als
+          Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten
+          nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als
           Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
           Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige
           Tätigkeit hinweisen.
@@ -121,12 +121,6 @@
   </div>
 </main>
 
-{# Footer #}
-<footer class="bg-[#130820] border-t border-[#8B2FC9]/20 py-8 px-6 mt-8">
-  <div class="max-w-3xl mx-auto flex gap-6 text-xs text-gray-600">
-    <a href="{{ url_for('core.impressum') }}" class="text-[#39FF14]">Impressum</a>
-    <a href="{{ url_for('core.datenschutz') }}" class="hover:text-gray-400 transition-colors">Datenschutz</a>
-  </div>
-</footer>
+{% include '_footer.html' %}
 
 {% endblock %}

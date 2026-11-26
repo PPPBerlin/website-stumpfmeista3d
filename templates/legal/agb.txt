@@ -1,0 +1,82 @@
+## § 1 Geltungsbereich
+
+Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen, die Verbraucher über den Online-Shop unter {{ site_url }}/shop abschließen. Verbraucher ist jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können (§ 13 BGB).
+
+Individuelle Aufträge (Konstruktion, Ersatzteile nach Maß, IT-Service), die über das Kontaktformular angefragt werden, sind nicht Gegenstand dieser AGB; hierfür wird jeweils ein gesondertes Angebot erstellt.
+
+## § 2 Vertragspartner
+
+Der Kaufvertrag kommt zustande mit:
+
+Paul-Philipp Pürst – Stumpfmeista3D
+Wolfsgartenstraße 6
+12555 Berlin
+E-Mail: info@stumpfmeista3d.de
+Telefon: 0172 / 4977 666
+
+## § 3 Vertragsschluss
+
+Die Darstellung der Produkte im Online-Shop stellt kein rechtlich bindendes Angebot dar, sondern eine Aufforderung zur Bestellung.
+
+Der Bestellvorgang läuft wie folgt ab:
+- Sie wählen ein Produkt und gegebenenfalls eine Ausführung (z. B. Farbe) aus und legen es in den Warenkorb.
+- Im Warenkorb können Sie Mengen ändern oder Artikel entfernen. Über „Zur Kasse“ gelangen Sie zur Bestellübersicht.
+- Die Bestellübersicht zeigt alle Artikel, Einzel- und Gesamtpreise, Versandkosten und Lieferzeit. Eingabefehler können Sie über „Warenkorb bearbeiten“ jederzeit korrigieren.
+- Mit Klick auf den Button „Zahlungspflichtig bestellen“ geben Sie ein verbindliches Angebot zum Kauf der im Warenkorb enthaltenen Waren ab.
+- Anschließend werden Sie zur Zahlungsseite unseres Zahlungsdienstleisters Stripe weitergeleitet. Dort geben Sie Ihre E-Mail-Adresse, Lieferadresse und Zahlungsdaten ein und schließen den Zahlungsvorgang ab.
+
+Wir erklären bereits jetzt die Annahme Ihres Angebots für den Zeitpunkt, in dem Sie den Zahlungsvorgang auf der Zahlungsseite von Stripe abschließen. In diesem Zeitpunkt kommt der Kaufvertrag zustande. Wird der Zahlungsvorgang nicht abgeschlossen oder abgebrochen, kommt kein Vertrag zustande und Sie sind nicht mehr an Ihr Angebot gebunden.
+
+Die anschließende Bestellbestätigung per E-Mail dokumentiert den geschlossenen Vertrag.
+
+Vertragssprache ist Deutsch.
+
+## § 4 Speicherung des Vertragstextes
+
+Wir speichern den Vertragstext (Bestelldaten und AGB). Sie erhalten die Bestelldaten, diese AGB und die Widerrufsbelehrung mit der Bestellbestätigung per E-Mail. Die AGB können Sie außerdem jederzeit unter {{ site_url }}/agb abrufen.
+
+## § 5 Preise und Versandkosten
+
+Alle Preise sind Endpreise. Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet und ausgewiesen.
+
+Zusätzlich fallen Versandkosten an. Deren Höhe wird auf der Seite „Versand & Zahlung“ ({{ site_url }}/versand), im Warenkorb und vor Abschluss der Bestellung angezeigt. Wir liefern ausschließlich an Adressen in Deutschland.
+
+## § 6 Zahlung
+
+Die Zahlung erfolgt über den Zahlungsdienstleister Stripe Payments Europe, Ltd. (1 Grand Canal Street Lower, Grand Canal Dock, Dublin, Irland). Die verfügbaren Zahlungsarten werden auf der Zahlungsseite angezeigt.
+
+Der Kaufpreis ist mit Vertragsschluss (§ 3) fällig und wird im selben Schritt über Stripe beglichen. Bei Zahlungsarten mit verzögerter Bestätigung (z. B. SEPA-Lastschrift) erfolgt der Versand nach Bestätigung des Zahlungseingangs. Scheitert eine solche Zahlung nachträglich, informieren wir Sie per E-Mail; die Ware wird erst nach erfolgreicher Zahlung versendet.
+
+## § 7 Lieferung
+
+Die Lieferzeit ist auf der jeweiligen Produktseite angegeben. Sie beginnt am Tag nach Zahlungseingang. Fällt das Ende der Frist auf einen Samstag, Sonntag oder gesetzlichen Feiertag am Lieferort, endet die Frist am nächsten Werktag.
+
+Ist ein Artikel trotz Bestandsangabe ausnahmsweise nicht lieferbar, informieren wir Sie unverzüglich und erstatten bereits geleistete Zahlungen umgehend.
+
+## § 8 Eigentumsvorbehalt
+
+Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
+
+## § 9 Widerrufsrecht
+
+Verbrauchern steht ein gesetzliches Widerrufsrecht zu. Einzelheiten ergeben sich aus der Widerrufsbelehrung unter {{ site_url }}/widerruf. Den Widerruf können Sie auch über unsere Widerrufsfunktion unter {{ site_url }}/vertrag-widerrufen erklären.
+
+## § 10 Gewährleistung
+
+Es gilt das gesetzliche Mängelhaftungsrecht.
+
+Unsere Produkte werden im 3D-Druck-Verfahren (FDM) gefertigt. Feine Schichtlinien sowie geringe Abweichungen in Farbton und Oberfläche gegenüber den Produktfotos sind verfahrensbedingt und Teil der Produktbeschreibung.
+
+## § 11 Transportschäden
+
+Werden Waren mit offensichtlichen Transportschäden angeliefert, bitten wir Sie, dies möglichst sofort beim Zusteller zu reklamieren und uns zu informieren. Die Unterlassung hat keinerlei Auswirkungen auf Ihre gesetzlichen Ansprüche; sie hilft uns lediglich, eigene Ansprüche gegenüber dem Transportunternehmen geltend zu machen.
+
+## § 12 Streitbeilegung
+
+Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+
+## § 13 Schlussbestimmungen
+
+Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. Bei Verbrauchern gilt diese Rechtswahl nur insoweit, als nicht der gewährte Schutz durch zwingende Bestimmungen des Rechts des Staates, in dem der Verbraucher seinen gewöhnlichen Aufenthalt hat, entzogen wird.
+
+Stand: November 2026

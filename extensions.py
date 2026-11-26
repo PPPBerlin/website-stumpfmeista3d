@@ -10,7 +10,21 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address)
+
+
+def client_ip():
+    """
+    Echte Besucher-IP hinter Cloudflare Tunnel → Nginx Proxy Manager.
+    Ohne das sähe der Limiter für alle Besucher dieselbe Proxy-IP.
+    """
+    from flask import request
+    return (request.headers.get('CF-Connecting-IP')
+            or request.headers.get('X-Real-IP')
+            or (request.headers.get('X-Forwarded-For') or '').split(',')[0].strip()
+            or get_remote_address())
+
+
+limiter = Limiter(key_func=client_ip)
 mail = Mail()
 
 login_manager.login_view = 'admin.login'

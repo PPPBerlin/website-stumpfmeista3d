@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} – Stumpfmeista3D{% endblock %}
+{% block meta_description %}{{ title }} von Stumpfmeista3D, Berlin.{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, follow" />{% endblock %}
+
+{% block body %}
+{% include '_subnav.html' %}
+
+<main class="max-w-3xl mx-auto px-6 py-16">
+  <h1 class="text-3xl font-bold text-white mb-2">{{ title }}</h1>
+  <p class="text-[#39FF14] text-xs font-mono mb-10 tracking-widest" style="text-shadow: 0 0 8px #39FF14;">
+    {{ subtitle }}
+  </p>
+
+  {% if show_withdrawal_button %}
+  <div class="mb-10 bg-[#1C0D28] border border-[#39FF14]/30 rounded-xl p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+    <p class="text-sm text-gray-300">Du möchtest einen Kauf widerrufen? Das geht direkt online.</p>
+    <a href="{{ url_for('legal.withdraw') }}"
+       class="shrink-0 text-center px-6 py-3 border border-[#39FF14] text-[#39FF14] font-bold text-sm rounded-lg hover:bg-[#39FF14]/10 transition-all">
+      Vertrag widerrufen
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="space-y-10">
+    {% for src in sources %}
+    <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8">
+      {% set content %}{% include src %}{% endset %}
+      {{ content | legal_html }}
+    </section>
+    {% endfor %}
+  </div>
+</main>
+
+{% include '_footer.html' %}
+{% endblock %}

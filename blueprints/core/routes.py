@@ -37,6 +37,13 @@ def sitemap():
         {'loc': f'{base}/impressum',  'priority': '0.3', 'changefreq': 'yearly'},
         {'loc': f'{base}/datenschutz','priority': '0.3', 'changefreq': 'yearly'},
     ]
+    if current_app.config['SHOP_ENABLED']:
+        from models import Product
+        pages.append({'loc': f'{base}/shop', 'priority': '0.9', 'changefreq': 'weekly'})
+        for p in Product.query.filter_by(is_active=True).all():
+            pages.append({'loc': f'{base}/shop/{p.slug}', 'priority': '0.8', 'changefreq': 'weekly'})
+        for path in ('agb', 'widerruf', 'versand'):
+            pages.append({'loc': f'{base}/{path}', 'priority': '0.3', 'changefreq': 'yearly'})
     xml = render_template('sitemap.xml', pages=pages, today=today)
     resp = make_response(xml)
     resp.headers['Content-Type'] = 'application/xml'
@@ -52,6 +59,9 @@ def robots():
         'Allow: /\n'
         'Disallow: /admin/\n'
         'Disallow: /kontakt/\n'
+        'Disallow: /warenkorb\n'
+        'Disallow: /kasse\n'
+        'Disallow: /vertrag-widerrufen\n'
         f'Sitemap: {base}/sitemap.xml\n'
     )
     resp = make_response(content)

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Warenkorb – Stumpfmeista3D{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, follow" />{% endblock %}
+
+{% block body %}
+{% include '_subnav.html' %}
+
+<main class="max-w-4xl mx-auto px-6 py-14">
+  <h1 class="text-3xl font-bold text-white mb-8">Warenkorb</h1>
+
+  {% if lines %}
+  <div class="bg-[#130820] border border-[#8B2FC9]/25 rounded-xl divide-y divide-[#8B2FC9]/15">
+    {% for l in lines %}
+    <div class="p-4 sm:p-5 flex gap-4 items-center flex-wrap sm:flex-nowrap">
+      <a href="{{ url_for('shop.product', slug=l.product.slug) }}" class="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-[#1C0D28] border border-[#8B2FC9]/20">
+        {% if l.product.cover_image %}
+        <img src="{{ url_for('shop.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />
+        {% endif %}
+      </a>
+      <div class="flex-1 min-w-[10rem]">
+        <a href="{{ url_for('shop.product', slug=l.product.slug) }}" class="text-white font-medium hover:text-[#39FF14]">{{ l.title }}</a>
+        <p class="text-xs text-gray-500 mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.product.delivery_time }}</p>
+      </div>
+      <form method="POST" action="{{ url_for('shop.cart_update') }}" class="flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="variant_id" value="{{ l.variant.id }}" />
+        <label for="qty-{{ l.variant.id }}" class="sr-only">Menge</label>
+        <input id="qty-{{ l.variant.id }}" type="number" name="qty" value="{{ l.qty }}" min="0"
+               max="{{ [l.variant.stock, config.SHOP_MAX_QTY_PER_ITEM] | min }}"
+               onchange="this.form.submit()"
+               class="w-16 bg-[#1C0D28] border border-[#8B2FC9]/40 rounded-lg px-2 py-2 text-center text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]" />
+        <button type="submit" name="action" value="remove" class="text-gray-600 hover:text-red-400 px-2 text-lg" aria-label="Entfernen">×</button>
+      </form>
+      <p class="w-24 text-right text-white font-bold">{{ l.total_cents | euro }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="text-sm text-gray-500 space-y-2 order-2 md:order-1">
+      {% if free_from and subtotal < free_from %}
+      <p class="text-gray-400">Noch <strong class="text-[#39FF14]">{{ (free_from - subtotal) | euro }}</strong> bis zum kostenlosen Versand.</p>
+      {% endif %}
+      <p>Lieferung nur innerhalb Deutschlands.</p>
+      <p>
+        Es gelten unsere <a href="{{ url_for('legal.agb') }}" class="underline hover:text-[#39FF14]">AGB</a>.
+        Informationen zum <a href="{{ url_for('legal.widerruf') }}" class="underline hover:text-[#39FF14]">Widerrufsrecht</a>.
+      </p>
+    </div>
+
+    <div class="bg-[#130820] border border-[#8B2FC9]/25 rounded-xl p-6 order-1 md:order-2">
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="text-gray-400">Zwischensumme</dt><dd class="text-white">{{ subtotal | euro }}</dd></div>
+        <div class="flex justify-between"><dt class="text-gray-400">Versand</dt><dd class="text-white">{% if shipping == 0 %}kostenlos{% else %}{{ shipping | euro }}{% endif %}</dd></div>
+        <div class="flex justify-between border-t border-[#8B2FC9]/20 pt-3 mt-3 text-lg">
+          <dt class="text-white font-bold">Gesamt</dt><dd class="text-[#39FF14] font-bold">{{ total | euro }}</dd>
+        </div>
+      </dl>
+      <p class="text-xs text-gray-600 mt-2">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+
+      {% if stripe_ready %}
+      <a href="{{ url_for('shop.checkout_review') }}"
+         class="block mt-6 w-full py-4 text-center bg-[#39FF14] text-[#130820] font-bold rounded-lg hover:bg-[#39FF14]/90 transition-all shadow-[0_0_20px_#39FF1460]">
+        Zur Kasse →
+      </a>
+      <p class="text-xs text-gray-600 mt-3 text-center">Im nächsten Schritt siehst du deine Bestellung noch einmal im Überblick.</p>
+      {% else %}
+      <p class="mt-6 text-sm text-yellow-400">Die Kasse ist gerade nicht verfügbar.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="text-center py-20 border border-dashed border-[#8B2FC9]/30 rounded-xl">
+    <p class="text-gray-400 mb-6">Dein Warenkorb ist leer.</p>
+    <a href="{{ url_for('shop.index') }}" class="px-6 py-3 border border-[#39FF14] text-[#39FF14] rounded-lg hover:bg-[#39FF14]/10 transition-all">Zum Shop</a>
+  </div>
+  {% endif %}
+</main>
+
+{% include '_footer.html' %}
+{% endblock %}

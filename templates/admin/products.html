@@ -1,0 +1,67 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Produkte{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Produkte</h1>
+    <p class="text-gray-600 text-sm mt-1">
+      {{ products|length }} Einträge ·
+      Shop ist {% if config.SHOP_ENABLED %}<span class="text-[#39FF14]">öffentlich</span>{% else %}<span class="text-yellow-400">nur Vorschau</span>{% endif %}
+      · <a href="{{ url_for('shop.index') }}" target="_blank" class="text-[#8B2FC9] hover:text-[#39FF14]">Shop ansehen ↗</a>
+    </p>
+  </div>
+  <a href="{{ url_for('admin.product_new') }}"
+     class="px-5 py-2.5 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+    + Neues Produkt
+  </a>
+</div>
+
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl overflow-x-auto">
+  {% if products %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/15 bg-[#130820]">
+        <th class="px-6 py-4 font-normal"></th>
+        <th class="px-6 py-4 font-normal">Name</th>
+        <th class="px-6 py-4 font-normal">Preis</th>
+        <th class="px-6 py-4 font-normal">Varianten</th>
+        <th class="px-6 py-4 font-normal">Bestand</th>
+        <th class="px-6 py-4 font-normal">Status</th>
+        <th class="px-6 py-4 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for p in products %}
+      <tr>
+        <td class="px-6 py-3">
+          <div class="w-12 h-12 rounded-lg overflow-hidden bg-[#130820] border border-[#8B2FC9]/20">
+            {% if p.cover_image %}<img src="{{ url_for('shop.product_image', filename=p.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
+          </div>
+        </td>
+        <td class="px-6 py-3 text-gray-200 font-medium">{{ p.name }}<br><span class="text-xs text-gray-600">/shop/{{ p.slug }}</span></td>
+        <td class="px-6 py-3 text-gray-300 whitespace-nowrap">{% if p.has_price_range %}ab {% endif %}{{ p.min_price_cents | euro }}</td>
+        <td class="px-6 py-3 text-gray-400">{{ p.active_variants | length }}</td>
+        <td class="px-6 py-3 {% if p.total_stock == 0 %}text-red-400{% elif p.total_stock <= 3 %}text-yellow-400{% else %}text-gray-300{% endif %}">{{ p.total_stock }}</td>
+        <td class="px-6 py-3">
+          {% if p.is_active %}
+          <span class="px-2.5 py-1 rounded-full text-xs bg-[#39FF14]/15 text-[#39FF14]">Aktiv</span>
+          {% else %}
+          <span class="px-2.5 py-1 rounded-full text-xs bg-gray-800 text-gray-500">Entwurf</span>
+          {% endif %}
+        </td>
+        <td class="px-6 py-3 whitespace-nowrap">
+          <a href="{{ url_for('admin.product_edit', product_id=p.id) }}" class="text-xs text-[#8B2FC9] hover:text-[#39FF14]">Bearbeiten →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="text-center py-16 text-gray-600">
+    <p class="text-4xl mb-3">◇</p>
+    <p>Noch keine Produkte.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

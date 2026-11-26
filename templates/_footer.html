@@ -1,0 +1,18 @@
+<footer class="bg-[#130820] border-t border-[#8B2FC9]/20 py-10 px-6 mt-16">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+    <div class="text-center md:text-left">
+      <p class="font-bold text-[#39FF14] font-mono" style="text-shadow: 0 0 8px #39FF14;">STUMPFMEISTA3D</p>
+      <p class="text-xs text-gray-600 mt-1">3D-Druck & IT-Service · Berlin</p>
+    </div>
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-600">
+      <a href="{{ url_for('core.impressum') }}" class="hover:text-[#39FF14] transition-colors">Impressum</a>
+      <a href="{{ url_for('core.datenschutz') }}" class="hover:text-[#39FF14] transition-colors">Datenschutz</a>
+      <a href="{{ url_for('legal.agb') }}" class="hover:text-[#39FF14] transition-colors">AGB</a>
+      <a href="{{ url_for('legal.widerruf') }}" class="hover:text-[#39FF14] transition-colors">Widerrufsbelehrung</a>
+      <a href="{{ url_for('legal.versand') }}" class="hover:text-[#39FF14] transition-colors">Versand & Zahlung</a>
+      <a href="{{ url_for('legal.withdraw') }}"
+         class="text-[#39FF14] border border-[#39FF14]/40 rounded px-2 -my-0.5 hover:bg-[#39FF14]/10 transition-colors">Vertrag widerrufen</a>
+    </div>
+    <p class="text-xs text-gray-700 font-mono">© {{ now.year }} Stumpfmeista3D</p>
+  </div>
+</footer>

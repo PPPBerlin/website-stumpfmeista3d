@@ -1,0 +1,23 @@
+Hallo {{ order.name or '' }},
+
+deine Bestellung {{ order.number }} ist unterwegs!
+{% if order.tracking_number %}
+Versand mit: {{ order.carrier or '—' }}
+Sendungsnummer: {{ order.tracking_number }}{% if tracking_url %}
+Sendungsverfolgung: {{ tracking_url }}{% endif %}
+{% endif %}
+DEINE BESTELLUNG
+{% include 'emails/_order_items.txt' %}
+
+LIEFERADRESSE
+{% include 'emails/_address.txt' %}
+
+Viel Freude damit! Bei Fragen antworte einfach auf diese E-Mail.
+
+Viele Grüße
+Paul – Stumpfmeista3D
+
+--
+Paul-Philipp Pürst – Stumpfmeista3D
+Wolfsgartenstraße 6, 12555 Berlin
+info@stumpfmeista3d.de · {{ site_url }}

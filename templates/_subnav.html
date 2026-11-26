@@ -1,0 +1,30 @@
+{# Navigation für Unterseiten (Shop, Rechtstexte) #}
+<nav class="sticky top-0 z-40 bg-[#130820]/90 backdrop-blur-sm border-b border-[#8B2FC9]/30"
+     style="top: env(safe-area-inset-top, 0px);">
+  <div class="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center gap-4">
+    <a href="{{ url_for('core.index') }}" class="flex items-center gap-3 shrink-0">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Stumpfmeista3D Logo" class="h-9 w-auto" />
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href="{{ url_for('core.index') }}" class="hidden sm:inline text-gray-400 hover:text-[#39FF14] transition-colors">Startseite</a>
+      {% if shop_visible %}
+      <a href="{{ url_for('shop.index') }}"
+         class="{% if request.endpoint in ('shop.index', 'shop.product') %}text-[#39FF14]{% else %}text-gray-400 hover:text-[#39FF14]{% endif %} transition-colors">Shop</a>
+      <a href="{{ url_for('shop.cart') }}" aria-label="Warenkorb"
+         class="relative flex items-center gap-2 text-[#39FF14] border border-[#39FF14]/50 px-3 py-1 rounded
+                hover:bg-[#39FF14]/10 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <span>{{ cart_count }}</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% if shop_visible and not shop_public %}
+  <div class="bg-yellow-900/60 text-yellow-300 text-xs text-center py-1 font-mono">
+    Admin-Vorschau — der Shop ist öffentlich noch nicht sichtbar (SHOP_ENABLED=false)
+  </div>
+  {% endif %}
+</nav>

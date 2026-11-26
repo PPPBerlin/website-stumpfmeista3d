@@ -1,0 +1,10 @@
+Neue bezahlte Bestellung {{ order.number }}
+
+{% include 'emails/_order_items.txt' %}
+
+Kunde: {{ order.name }} <{{ order.email }}>{% if order.phone %} · {{ order.phone }}{% endif %}
+
+Lieferadresse:
+{% include 'emails/_address.txt' %}
+
+Im Admin öffnen: {{ site_url }}/admin/bestellungen/{{ order.id }}

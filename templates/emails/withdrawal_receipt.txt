@@ -1,0 +1,23 @@
+Hallo {{ w.name }},
+
+hiermit bestätigen wir den Eingang deines Widerrufs.
+
+Eingegangen am: {{ received }}
+Bestellnummer:  {{ w.order_number }}
+Name:           {{ w.name }}
+E-Mail:         {{ w.email }}
+{% if w.message %}Anmerkung:      {{ w.message }}
+{% endif %}
+Erklärung: „Hiermit widerrufe ich den mit der oben genannten Bestellung geschlossenen Kaufvertrag."
+
+Bitte sende die Ware innerhalb von 14 Tagen an:
+Paul-Philipp Pürst – Stumpfmeista3D
+Wolfsgartenstraße 6
+12555 Berlin
+
+Die Rückzahlung erfolgt über dasselbe Zahlungsmittel, sobald die Ware bei uns eingegangen ist
+oder du die Rücksendung nachgewiesen hast. Wir melden uns, falls wir noch etwas brauchen.
+
+Viele Grüße
+Paul – Stumpfmeista3D
+info@stumpfmeista3d.de
