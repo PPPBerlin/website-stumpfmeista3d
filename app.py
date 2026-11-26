@@ -32,11 +32,16 @@ def create_app(config_class=Config):
     from datetime import datetime
     from flask_login import current_user
 
+    # Cache-Busting für das kompilierte CSS
+    css_path = os.path.join(app.static_folder, 'css', 'site.css')
+    css_version = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
+
     @app.context_processor
     def inject_globals():
         shop_public = app.config['SHOP_ENABLED']
         return {
             'now': datetime.utcnow(),
+            'css_version': css_version,
             'matomo_url': app.config.get('MATOMO_URL', ''),
             'matomo_site_id': app.config.get('MATOMO_SITE_ID', '1'),
             'site_url': app.config['SITE_URL'].rstrip('/'),

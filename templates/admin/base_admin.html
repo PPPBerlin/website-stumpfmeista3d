@@ -6,16 +6,7 @@
   <title>{% block title %}Admin{% endblock %} — Stumpfmeista3D</title>
   <meta name="robots" content="noindex, nofollow" />
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { neon: '#39FF14', purple: '#8B2FC9', dark: '#1C0D28', darker: '#130820' },
-        },
-      },
-    }
-  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}?v={{ css_version }}" />
   <style>
     @font-face {
       font-family: 'JetBrains Mono';
