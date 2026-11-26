@@ -15,9 +15,9 @@ LIEFERADRESSE
 Viel Freude damit! Bei Fragen antworte einfach auf diese E-Mail.
 
 Viele Grüße
-Paul – Stumpfmeista3D
+Paul – {{ sf.name }}
 
 --
 Paul-Philipp Pürst – Stumpfmeista3D
 Wolfsgartenstraße 6, 12555 Berlin
-info@stumpfmeista3d.de · {{ site_url }}
+info@stumpfmeista3d.de · {{ sf_base }}

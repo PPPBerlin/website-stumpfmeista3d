@@ -33,6 +33,9 @@ class Config:
     # --- Shop ---
     # Solange False, ist der Shop nur für eingeloggte Admins sichtbar (Vorschau).
     SHOP_ENABLED = os.environ.get('SHOP_ENABLED', 'false').lower() in ('1', 'true', 'yes')
+    # Boutique-Schaufenster (helles Design) — eigener Schalter, optional eigene Domain
+    BOUTIQUE_ENABLED = os.environ.get('BOUTIQUE_ENABLED', 'false').lower() in ('1', 'true', 'yes')
+    BOUTIQUE_DOMAIN = os.environ.get('BOUTIQUE_DOMAIN', '')
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
     # Versandpauschale in Cent (nur Deutschland)

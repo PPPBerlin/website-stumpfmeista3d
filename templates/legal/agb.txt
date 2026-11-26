@@ -1,6 +1,6 @@
 ## § 1 Geltungsbereich
 
-Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen, die Verbraucher über den Online-Shop unter {{ site_url }}/shop abschließen. Verbraucher ist jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können (§ 13 BGB).
+Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen, die Verbraucher über den Online-Shop unter {{ shop_url }} abschließen. Verbraucher ist jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können (§ 13 BGB).
 
 Individuelle Aufträge (Konstruktion, Ersatzteile nach Maß, IT-Service), die über das Kontaktformular angefragt werden, sind nicht Gegenstand dieser AGB; hierfür wird jeweils ein gesondertes Angebot erstellt.
 
@@ -33,13 +33,13 @@ Vertragssprache ist Deutsch.
 
 ## § 4 Speicherung des Vertragstextes
 
-Wir speichern den Vertragstext (Bestelldaten und AGB). Sie erhalten die Bestelldaten, diese AGB und die Widerrufsbelehrung mit der Bestellbestätigung per E-Mail. Die AGB können Sie außerdem jederzeit unter {{ site_url }}/agb abrufen.
+Wir speichern den Vertragstext (Bestelldaten und AGB). Sie erhalten die Bestelldaten, diese AGB und die Widerrufsbelehrung mit der Bestellbestätigung per E-Mail. Die AGB können Sie außerdem jederzeit unter {{ sf_base }}/agb abrufen.
 
 ## § 5 Preise und Versandkosten
 
 Alle Preise sind Endpreise. Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet und ausgewiesen.
 
-Zusätzlich fallen Versandkosten an. Deren Höhe wird auf der Seite „Versand & Zahlung“ ({{ site_url }}/versand), im Warenkorb und vor Abschluss der Bestellung angezeigt. Wir liefern ausschließlich an Adressen in Deutschland.
+Zusätzlich fallen Versandkosten an. Deren Höhe wird auf der Seite „Versand & Zahlung“ ({{ sf_base }}/versand), im Warenkorb und vor Abschluss der Bestellung angezeigt. Wir liefern ausschließlich an Adressen in Deutschland.
 
 ## § 6 Zahlung
 
@@ -59,7 +59,7 @@ Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
 
 ## § 9 Widerrufsrecht
 
-Verbrauchern steht ein gesetzliches Widerrufsrecht zu. Einzelheiten ergeben sich aus der Widerrufsbelehrung unter {{ site_url }}/widerruf. Den Widerruf können Sie auch über unsere Widerrufsfunktion unter {{ site_url }}/vertrag-widerrufen erklären.
+Verbrauchern steht ein gesetzliches Widerrufsrecht zu. Einzelheiten ergeben sich aus der Widerrufsbelehrung unter {{ sf_base }}/widerruf. Den Widerruf können Sie auch über unsere Widerrufsfunktion unter {{ sf_base }}/vertrag-widerrufen erklären.
 
 ## § 10 Gewährleistung
 

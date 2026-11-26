@@ -14,7 +14,7 @@
     <div class="p-4 sm:p-5 flex gap-4 items-center flex-wrap sm:flex-nowrap">
       <a href="{{ url_for('shop.product', slug=l.product.slug) }}" class="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-[#1C0D28] border border-[#8B2FC9]/20">
         {% if l.product.cover_image %}
-        <img src="{{ url_for('shop.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />
+        <img src="{{ url_for('shop_common.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />
         {% endif %}
       </a>
       <div class="flex-1 min-w-[10rem]">

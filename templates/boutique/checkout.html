@@ -1,0 +1,55 @@
+{% extends "boutique/base.html" %}
+{% block title %}Bestellübersicht – Stumpfmeista3D Boutique{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-5 sm:px-8 pt-12">
+  <p class="text-xs tracking-[0.35em] uppercase text-[#B08D57]">Kasse</p>
+  <h1 class="font-display text-5xl text-[#3A2A30] mt-2">Bestellübersicht</h1>
+  <p class="text-[#7D6A70] mt-3 mb-8">Bitte prüfe deine Bestellung. Adresse und Zahlungsart gibst du im nächsten Schritt bei Stripe ein.</p>
+
+  <section class="bg-white rounded-2xl border border-[#EADBD6] divide-y divide-[#EADBD6]">
+    {% for l in lines %}
+    <div class="p-4 sm:p-5 flex gap-4 items-center">
+      <div class="w-16 h-20 shrink-0 rounded-xl overflow-hidden bg-[#F4E3DF]">
+        {% if l.product.cover_image %}<img src="{{ url_for('shop_common.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-display text-xl text-[#3A2A30]">{{ l.qty }} × {{ l.title }}</p>
+        <p class="text-xs text-[#7D6A70] mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.product.delivery_time }}</p>
+        {% if l.product.short_description %}<p class="text-xs text-[#7D6A70] truncate">{{ l.product.short_description }}</p>{% endif %}
+      </div>
+      <p class="font-medium whitespace-nowrap">{{ l.total_cents | euro }}</p>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="mt-6 bg-white rounded-2xl border border-[#EADBD6] p-6 sm:p-8">
+    <dl class="space-y-2 text-sm">
+      <div class="flex justify-between"><dt class="text-[#7D6A70]">Zwischensumme</dt><dd>{{ subtotal | euro }}</dd></div>
+      <div class="flex justify-between"><dt class="text-[#7D6A70]">{{ config.SHOP_SHIPPING_LABEL }}</dt><dd>{% if shipping == 0 %}kostenlos{% else %}{{ shipping | euro }}{% endif %}</dd></div>
+      <div class="flex justify-between border-t border-[#EADBD6] pt-3 mt-3 text-lg">
+        <dt class="font-medium">Gesamtpreis</dt><dd class="font-display text-3xl text-[#7A2338]">{{ total | euro }}</dd>
+      </div>
+    </dl>
+    <p class="text-xs text-[#7D6A70] mt-2">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. Lieferung nur innerhalb Deutschlands.</p>
+
+    <div class="mt-6 pt-5 border-t border-[#EADBD6] text-xs text-[#4A3A40] space-y-2">
+      <p>Es gelten unsere <a href="{{ surl('legal.agb') }}" target="_blank" class="underline underline-offset-2 hover:text-[#7A2338]">AGB</a>. Hier findest du die <a href="{{ surl('legal.widerruf') }}" target="_blank" class="underline underline-offset-2 hover:text-[#7A2338]">Widerrufsbelehrung</a> und unsere <a href="{{ surl('legal.datenschutz') }}" target="_blank" class="underline underline-offset-2 hover:text-[#7A2338]">Datenschutzerklärung</a>.</p>
+      <p>Der Kaufvertrag kommt zustande, sobald du die Zahlung bei Stripe abschließt. Brichst du dort ab, entsteht kein Vertrag.</p>
+    </div>
+
+    {% if stripe_ready %}
+    <form method="POST" action="{{ surl('shop.checkout') }}" class="mt-6">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="w-full py-4 rounded-full bg-[#7A2338] text-white font-medium tracking-wide hover:bg-[#5E1A2B] transition-colors">
+        Zahlungspflichtig bestellen
+      </button>
+    </form>
+    {% else %}
+    <p class="mt-6 text-sm text-[#7A2338]">Die Kasse ist gerade nicht verfügbar.</p>
+    {% endif %}
+    <a href="{{ surl('shop.cart') }}" class="block mt-4 text-center text-xs text-[#7D6A70] hover:text-[#7A2338]">← Warenkorb bearbeiten</a>
+  </section>
+</div>
+{% endblock %}

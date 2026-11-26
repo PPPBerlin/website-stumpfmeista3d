@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Stumpfmeista3D Boutique{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Handgefertigte, 3D-gedruckte Accessoires für Burlesque, Bühne & Boudoir – entworfen und gedruckt in Berlin.{% endblock %}" />
+  {% block robots %}<meta name="robots" content="index, follow" />{% endblock %}
+  <link rel="canonical" href="{{ request.url }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Stumpfmeista3D Boutique" />
+  <meta property="og:title" content="{% block og_title %}Stumpfmeista3D Boutique{% endblock %}" />
+  <meta property="og:url" content="{{ request.url }}" />
+  {% block og_image %}{% endblock %}
+  <meta name="theme-color" content="#FBF7F2" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}?v={{ css_version }}" />
+
+  {# Schriften selbst gehostet (OFL) — keine Verbindung zu Google Fonts #}
+  <style>
+    @font-face { font-family: 'Cormorant Garamond'; font-weight: 500; font-style: normal; font-display: swap;
+      src: url("{{ url_for('static', filename='fonts/CormorantGaramond-Medium.woff2') }}") format('woff2'); }
+    @font-face { font-family: 'Cormorant Garamond'; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("{{ url_for('static', filename='fonts/CormorantGaramond-SemiBold.woff2') }}") format('woff2'); }
+    @font-face { font-family: 'Cormorant Garamond'; font-weight: 500; font-style: italic; font-display: swap;
+      src: url("{{ url_for('static', filename='fonts/CormorantGaramond-MediumItalic.woff2') }}") format('woff2'); }
+    @font-face { font-family: 'Jost'; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("{{ url_for('static', filename='fonts/Jost-Regular.woff2') }}") format('woff2'); }
+    @font-face { font-family: 'Jost'; font-weight: 500; font-style: normal; font-display: swap;
+      src: url("{{ url_for('static', filename='fonts/Jost-Medium.woff2') }}") format('woff2'); }
+
+    /* Palette: Creme · Puderrosa · Bordeaux · Gold */
+    body { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; background: #FBF7F2; color: #3A2A30; }
+    .font-display { font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; letter-spacing: .01em; }
+    .gold-rule { height: 1px; background: linear-gradient(90deg, transparent, #B08D57, transparent); }
+
+    /* Rechtstexte (legal_format.py) — helles Design */
+    .legal-h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; font-weight: 600; color: #7A2338; margin: 2rem 0 .5rem; }
+    .legal-h2:first-child { margin-top: 0; }
+    .legal-p { font-size: .95rem; line-height: 1.7; color: #4A3A40; margin-bottom: .75rem; }
+    .legal-ul { list-style: disc; padding-left: 1.25rem; font-size: .95rem; color: #4A3A40; margin-bottom: .75rem; }
+    .legal-ul li { margin: .25rem 0; }
+    .legal-strong { color: #3A2A30; font-weight: 500; }
+    .legal-link { color: #7A2338; text-decoration: underline; text-underline-offset: 2px; }
+    .legal-link:hover { color: #B08D57; }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+
+  {# Matomo — cookielos, eigener Server (siehe Datenschutzerklärung) #}
+  {% if matomo_url and matomo_site_id %}
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(['disableCookies']);
+    _paq.push(['setDoNotTrack', true]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u = '{{ matomo_url }}/';
+      _paq.push(['setTrackerUrl', u + 'matomo.php']);
+      _paq.push(['setSiteId', '{{ matomo_site_id }}']);
+      var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+      g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+    })();
+  </script>
+  {% endif %}
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+  {% include 'boutique/_nav.html' %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="flash-container" class="fixed top-20 right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-sm">
+      {% for category, message in messages %}
+      <div class="px-4 py-3 rounded-xl text-sm shadow-lg border
+        {% if category == 'success' %}bg-white border-[#B08D57]/50 text-[#3A2A30]
+        {% elif category == 'error' %}bg-[#FDF0EE] border-[#7A2338]/40 text-[#7A2338]
+        {% else %}bg-white border-[#EADBD6] text-[#4A3A40]{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    <script>setTimeout(() => document.getElementById('flash-container')?.remove(), 4500);</script>
+    {% endif %}
+  {% endwith %}
+
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'boutique/_footer.html' %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

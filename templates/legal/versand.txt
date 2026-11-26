@@ -1,0 +1,20 @@
+## Versandkosten
+
+{{ config.SHOP_SHIPPING_LABEL }}: **{{ config.SHOP_SHIPPING_CENTS | euro }}**{% if config.SHOP_FREE_SHIPPING_FROM_CENTS %}
+Ab einem Warenwert von {{ config.SHOP_FREE_SHIPPING_FROM_CENTS | euro }}: **versandkostenfrei**{% endif %}
+
+Die Versandkosten fallen einmal pro Bestellung an, unabhängig von der Anzahl der Artikel. Wir liefern derzeit ausschließlich innerhalb Deutschlands.
+
+## Lieferzeit
+
+Die Lieferzeit steht auf jeder Produktseite. Sie beginnt am Tag nach dem Zahlungseingang. Sobald dein Paket unterwegs ist, bekommst du eine E-Mail mit Sendungsnummer.
+
+## Zahlung
+
+Bezahlt wird sicher über unseren Zahlungsdienstleister **Stripe**. Je nach Verfügbarkeit stehen dir u. a. Kredit-/Debitkarte, PayPal, Klarna, SEPA-Lastschrift, Apple Pay und Google Pay zur Auswahl — welche genau, siehst du auf der Zahlungsseite.
+
+Deine Zahlungsdaten gibst du ausschließlich bei Stripe ein; sie werden nicht auf unserem Server gespeichert. Bei SEPA-Lastschrift versenden wir, sobald die Zahlung bestätigt ist.
+
+## Preise
+
+Alle Preise sind Endpreise. Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmer).

@@ -1,0 +1,26 @@
+{% extends "boutique/base.html" %}
+{% block title %}{{ title }} – Stumpfmeista3D Boutique{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow" />{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-5 sm:px-8 pt-12">
+  <p class="text-xs tracking-[0.35em] uppercase text-[#B08D57]">{{ subtitle }}</p>
+  <h1 class="font-display text-5xl text-[#3A2A30] mt-2 mb-10">{{ title }}</h1>
+
+  {% if show_withdrawal_button %}
+  <div class="mb-10 bg-[#F4E3DF] rounded-2xl p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+    <p class="text-[#4A3A40]">Du möchtest einen Kauf widerrufen? Das geht direkt online.</p>
+    <a href="{{ surl('legal.withdraw') }}" class="shrink-0 text-center px-6 py-3 rounded-full bg-[#7A2338] text-white hover:bg-[#5E1A2B] transition-colors">Vertrag widerrufen</a>
+  </div>
+  {% endif %}
+
+  <div class="space-y-8">
+    {% for src in sources %}
+    <section class="bg-white rounded-2xl border border-[#EADBD6] p-6 sm:p-10">
+      {% set content %}{% include src %}{% endset %}
+      {{ content | legal_html }}
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

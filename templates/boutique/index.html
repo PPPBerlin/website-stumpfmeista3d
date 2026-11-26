@@ -1,0 +1,61 @@
+{% extends "boutique/base.html" %}
+{% block title %}Stumpfmeista3D Boutique – Accessoires für Burlesque, Bühne & Boudoir{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-b from-[#F4E3DF] via-[#FBF7F2] to-[#FBF7F2]" aria-hidden="true"></div>
+  <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#EBC9C3]/50 blur-3xl" aria-hidden="true"></div>
+  <div class="absolute top-32 -left-24 w-72 h-72 rounded-full bg-[#B08D57]/10 blur-3xl" aria-hidden="true"></div>
+  <div class="relative max-w-6xl mx-auto px-5 sm:px-8 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
+    <p class="text-xs tracking-[0.35em] uppercase text-[#B08D57]">Handgefertigt in Berlin</p>
+    <h1 class="font-display text-5xl sm:text-6xl md:text-7xl text-[#3A2A30] mt-4 leading-[1.05]">
+      Glanzstücke für<br><em class="text-[#7A2338]">Bühne & Boudoir</em>
+    </h1>
+    <p class="mt-6 text-[#7D6A70] max-w-xl mx-auto leading-relaxed">
+      Accessoires für Burlesque-Künstlerinnen und alle, die gern funkeln — entworfen und
+      Schicht für Schicht gedruckt in meiner kleinen Werkstatt.
+    </p>
+    <div class="gold-rule w-40 mx-auto mt-10"></div>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-5 sm:px-8" aria-labelledby="kollektion">
+  <h2 id="kollektion" class="font-display text-3xl text-[#3A2A30] mb-8">Die Kollektion</h2>
+
+  {% if products %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+    {% for p in products %}
+    <a href="{{ surl('shop.product', slug=p.slug) }}" class="group block">
+      <div class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#F4E3DF] shadow-[0_1px_0_#EADBD6] group-hover:shadow-[0_18px_40px_-18px_#7A233855] transition-shadow duration-300">
+        {% if p.cover_image %}
+        <img src="{{ url_for('shop_common.product_image', filename=p.cover_image.filename) }}"
+             alt="{{ p.cover_image.alt or p.name }}" loading="lazy"
+             class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 {% if p.is_sold_out %}opacity-60 grayscale-[30%]{% endif %}" />
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center font-display italic text-6xl text-[#EBC9C3]">B</div>
+        {% endif %}
+        {% if p.is_sold_out %}
+        <span class="absolute top-4 left-4 px-3 py-1 rounded-full text-xs bg-white/90 text-[#7A2338]">Ausverkauft</span>
+        {% endif %}
+      </div>
+      <div class="mt-4 flex items-start justify-between gap-4">
+        <div>
+          <h3 class="font-display text-2xl text-[#3A2A30] group-hover:text-[#7A2338] transition-colors leading-tight">{{ p.name }}</h3>
+          {% if p.short_description %}<p class="text-sm text-[#7D6A70] mt-1 line-clamp-2">{{ p.short_description }}</p>{% endif %}
+        </div>
+        <p class="shrink-0 text-[#7A2338] font-medium whitespace-nowrap pt-1">
+          {% if p.has_price_range %}<span class="text-xs text-[#7D6A70]">ab </span>{% endif %}{{ p.min_price_cents | euro }}
+        </p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="mt-12">{% include 'boutique/_price_note.html' %}</div>
+  {% else %}
+  <div class="text-center py-24 rounded-2xl border border-dashed border-[#EBC9C3]">
+    <p class="font-display italic text-3xl text-[#7A2338]">Bald hier.</p>
+    <p class="text-[#7D6A70] mt-2">Die ersten Stücke sind gerade im Druck.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -14,7 +14,7 @@
     {% for l in lines %}
     <div class="p-4 sm:p-5 flex gap-4 items-center">
       <div class="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-[#1C0D28] border border-[#8B2FC9]/20">
-        {% if l.product.cover_image %}<img src="{{ url_for('shop.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
+        {% if l.product.cover_image %}<img src="{{ url_for('shop_common.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-white font-medium">{{ l.qty }} × {{ l.title }}</p>
@@ -40,7 +40,7 @@
       <p>
         Es gelten unsere <a href="{{ url_for('legal.agb') }}" target="_blank" class="underline hover:text-[#39FF14]">AGB</a>.
         Hier findest du die <a href="{{ url_for('legal.widerruf') }}" target="_blank" class="underline hover:text-[#39FF14]">Widerrufsbelehrung</a>
-        und unsere <a href="{{ url_for('core.datenschutz') }}" target="_blank" class="underline hover:text-[#39FF14]">Datenschutzerklärung</a>.
+        und unsere <a href="{{ url_for('legal.datenschutz') }}" target="_blank" class="underline hover:text-[#39FF14]">Datenschutzerklärung</a>.
       </p>
       <p>Der Kaufvertrag kommt zustande, sobald du die Zahlung bei Stripe abschließt. Brichst du dort ab, entsteht kein Vertrag.</p>
     </div>

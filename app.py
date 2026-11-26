@@ -36,10 +36,16 @@ def create_app(config_class=Config):
     css_path = os.path.join(app.static_folder, 'css', 'site.css')
     css_version = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
 
+    from storefronts import current_sf, sf_url, sf_context, DomainRouter, BOUTIQUE
+
     @app.context_processor
     def inject_globals():
-        shop_public = app.config['SHOP_ENABLED']
+        sf = current_sf()
+        shop_public = sf.enabled
         return {
+            **sf_context(sf),
+            'surl': sf_url,
+            'boutique_sf': BOUTIQUE,
             'now': datetime.utcnow(),
             'css_version': css_version,
             'matomo_url': app.config.get('MATOMO_URL', ''),
@@ -54,14 +60,22 @@ def create_app(config_class=Config):
     from blueprints.core.routes import core_bp
     from blueprints.contact.routes import contact_bp
     from blueprints.admin.routes import admin_bp
-    from blueprints.shop.routes import shop_bp
+    from blueprints.shop.routes import shop_bp, shop_common_bp, boutique_start_bp
     from blueprints.legal.routes import legal_bp
 
     app.register_blueprint(core_bp)
     app.register_blueprint(contact_bp, url_prefix='/kontakt')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    # Schaufenster: Stumpfmeista3D (ohne Präfix) und Boutique (/boutique)
+    app.register_blueprint(shop_common_bp)
     app.register_blueprint(shop_bp)
     app.register_blueprint(legal_bp)
+    app.register_blueprint(boutique_start_bp, url_prefix='/boutique')
+    app.register_blueprint(shop_bp, url_prefix='/boutique', name='boutique_shop')
+    app.register_blueprint(legal_bp, url_prefix='/boutique', name='boutique_legal')
+
+    # Eigene Domain für die Boutique (BOUTIQUE_DOMAIN) → interne /boutique-Routen
+    app.wsgi_app = DomainRouter(app.wsgi_app, app)
 
     return app
 

@@ -6,8 +6,8 @@ ein Kaufvertrag ist nicht zustande gekommen und es wird nichts versendet.
 
 {% include 'emails/_order_items.txt' %}
 
-Wenn du die Artikel trotzdem haben möchtest, bestell gern erneut unter {{ site_url }}/shop
+Wenn du die Artikel trotzdem haben möchtest, bestell gern erneut unter {{ shop_url }}
 oder antworte einfach auf diese E-Mail.
 
 Viele Grüße
-Paul – Stumpfmeista3D
+Paul – {{ sf.name }}

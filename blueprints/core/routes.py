@@ -14,16 +14,6 @@ def index():
     )
 
 
-@core_bp.route('/impressum')
-def impressum():
-    return render_template('impressum.html')
-
-
-@core_bp.route('/datenschutz')
-def datenschutz():
-    return render_template('datenschutz.html')
-
-
 @core_bp.route('/sitemap.xml')
 def sitemap():
     """Dynamische XML-Sitemap für Google & Co."""
@@ -44,6 +34,13 @@ def sitemap():
             pages.append({'loc': f'{base}/shop/{p.slug}', 'priority': '0.8', 'changefreq': 'weekly'})
         for path in ('agb', 'widerruf', 'versand'):
             pages.append({'loc': f'{base}/{path}', 'priority': '0.3', 'changefreq': 'yearly'})
+    if current_app.config['BOUTIQUE_ENABLED'] and not current_app.config['BOUTIQUE_DOMAIN']:
+        # Boutique unter /boutique (bei eigener Domain hat sie eine eigene Sitemap-Basis)
+        from models import Product
+        pages.append({'loc': f'{base}/boutique/', 'priority': '0.9', 'changefreq': 'weekly'})
+        for p in Product.query.filter_by(is_active=True, show_in_boutique=True).all():
+            pages.append({'loc': f'{base}/boutique/shop/{p.slug}', 'priority': '0.8',
+                          'changefreq': 'weekly'})
     xml = render_template('sitemap.xml', pages=pages, today=today)
     resp = make_response(xml)
     resp.headers['Content-Type'] = 'application/xml'

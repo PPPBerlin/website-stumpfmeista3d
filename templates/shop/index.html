@@ -22,7 +22,7 @@
               hover:border-[#39FF14]/60 hover:shadow-[0_0_18px_#39FF1425] transition-all duration-200">
       <div class="relative aspect-square bg-[#1C0D28] overflow-hidden">
         {% if p.cover_image %}
-        <img src="{{ url_for('shop.product_image', filename=p.cover_image.filename) }}"
+        <img src="{{ url_for('shop_common.product_image', filename=p.cover_image.filename) }}"
              alt="{{ p.cover_image.alt or p.name }}" loading="lazy"
              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if p.is_sold_out %}opacity-50{% endif %}" />
         {% else %}

@@ -140,6 +140,10 @@ def _save_product_form(product):
     product.material = f.get('material', '').strip() or None
     product.safety_info = f.get('safety_info', '').strip() or None
     product.is_active = f.get('is_active') == '1'
+    product.show_in_main = f.get('show_in_main') == '1'
+    product.show_in_boutique = f.get('show_in_boutique') == '1'
+    if product.is_active and not (product.show_in_main or product.show_in_boutique):
+        errors.append('Aktives Produkt: bitte mindestens einen Shop auswählen.')
     product.sort_order = f.get('sort_order', 0, type=int) or 0
     try:
         price = parse_euro(f.get('price'))

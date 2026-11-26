@@ -9,6 +9,8 @@ from datetime import timezone
 from zoneinfo import ZoneInfo
 from markupsafe import Markup, escape
 
+_MAIL = re.compile(r'(?<![\w.@/])([\w.+-]+@[\w-]+\.[\w.]+\w)')
+_BOLD = re.compile(r'\*\*(.+?)\*\*')
 _URL = re.compile(r'(https?://[^\s)<]+?)(?=[.,;:]?(?:\s|<|\)|$))')
 
 
@@ -20,7 +22,7 @@ def legal_html(text):
     out = []
     for block in _blocks(text):
         if block.startswith('## '):
-            out.append(f'<h2 class="text-lg font-bold text-white mt-8 first:mt-0 mb-3">'
+            out.append(f'<h2 class="legal-h2">'
                        f'{escape(block[3:])}</h2>')
             continue
         lines = block.split('\n')
@@ -30,11 +32,13 @@ def legal_html(text):
         html = ''
         if para:
             body = '<br>'.join(str(escape(l)) for l in para)
-            body = _URL.sub(r'<a href="\1" class="text-[#8B2FC9] hover:text-[#39FF14] underline break-all">\1</a>', body)
-            html += f'<p class="text-sm text-gray-300 leading-relaxed mb-3">{body}</p>'
+            body = _BOLD.sub(r'<strong class="legal-strong">\1</strong>', body)
+            body = _MAIL.sub(r'<a href="mailto:\1" class="legal-link">\1</a>', body)
+            body = _URL.sub(r'<a href="\1" class="legal-link break-all" rel="noopener">\1</a>', body)
+            html += f'<p class="legal-p">{body}</p>'
         if items:
-            lis = ''.join(f'<li>{escape(i[2:])}</li>' for i in items)
-            html += f'<ul class="list-disc pl-5 space-y-1 text-sm text-gray-300 mb-3">{lis}</ul>'
+            lis = ''.join('<li>' + _BOLD.sub(r'<strong class="legal-strong">\1</strong>', str(escape(i[2:]))) + '</li>' for i in items)
+            html += f'<ul class="legal-ul">{lis}</ul>'
         out.append(html)
     return Markup('\n'.join(out))
 
@@ -47,7 +51,7 @@ def legal_text(text):
             title = block[3:]
             out.append(f'{title.upper()}\n{"-" * len(title)}')
         else:
-            out.append(block)
+            out.append(_BOLD.sub(r'\1', block))
     return '\n\n'.join(out)
 
 

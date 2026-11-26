@@ -69,7 +69,7 @@
     <tbody class="divide-y divide-[#8B2FC9]/10">
       {% for o in orders %}
       <tr>
-        <td class="px-6 py-4 text-gray-300 font-mono whitespace-nowrap">{{ o.number }}</td>
+        <td class="px-6 py-4 text-gray-300 font-mono whitespace-nowrap">{{ o.number }}{% if o.storefront == 'boutique' %}<br><span class="text-[10px] px-1.5 py-0.5 rounded bg-[#F4C6C0]/15 text-[#F4C6C0] font-sans">Boutique</span>{% endif %}</td>
         <td class="px-6 py-4 text-gray-200">{{ o.name or '—' }}<br><span class="text-xs text-gray-600">{{ o.email or '' }}</span></td>
         <td class="px-6 py-4 text-gray-400 text-xs">{% for i in o.items %}{{ i.quantity }}× {{ i.display_name }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
         <td class="px-6 py-4 text-white whitespace-nowrap">{{ o.total_cents | euro }}</td>

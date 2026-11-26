@@ -19,5 +19,5 @@ Die Rückzahlung erfolgt über dasselbe Zahlungsmittel, sobald die Ware bei uns 
 oder du die Rücksendung nachgewiesen hast. Wir melden uns, falls wir noch etwas brauchen.
 
 Viele Grüße
-Paul – Stumpfmeista3D
+Paul – {{ sf.name }}
 info@stumpfmeista3d.de

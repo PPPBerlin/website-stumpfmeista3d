@@ -1,0 +1,66 @@
+{% extends "boutique/base.html" %}
+{% block title %}Warenkorb – Stumpfmeista3D Boutique{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow" />{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-5 sm:px-8 pt-12">
+  <h1 class="font-display text-5xl text-[#3A2A30] mb-10">Warenkorb</h1>
+
+  {% if lines %}
+  <div class="bg-white rounded-2xl border border-[#EADBD6] divide-y divide-[#EADBD6]">
+    {% for l in lines %}
+    <div class="p-4 sm:p-6 flex gap-4 sm:gap-6 items-center flex-wrap sm:flex-nowrap">
+      <a href="{{ surl('shop.product', slug=l.product.slug) }}" class="w-20 h-24 shrink-0 rounded-xl overflow-hidden bg-[#F4E3DF]">
+        {% if l.product.cover_image %}<img src="{{ url_for('shop_common.product_image', filename=l.product.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
+      </a>
+      <div class="flex-1 min-w-[10rem]">
+        <a href="{{ surl('shop.product', slug=l.product.slug) }}" class="font-display text-xl text-[#3A2A30] hover:text-[#7A2338]">{{ l.title }}</a>
+        <p class="text-xs text-[#7D6A70] mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.product.delivery_time }}</p>
+      </div>
+      <form method="POST" action="{{ surl('shop.cart_update') }}" class="flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="variant_id" value="{{ l.variant.id }}" />
+        <label for="qty-{{ l.variant.id }}" class="sr-only">Menge</label>
+        <input id="qty-{{ l.variant.id }}" type="number" name="qty" value="{{ l.qty }}" min="0"
+               max="{{ [l.variant.stock, config.SHOP_MAX_QTY_PER_ITEM] | min }}" onchange="this.form.submit()"
+               class="w-16 bg-[#FBF7F2] border border-[#EADBD6] rounded-full px-2 py-2 text-center text-sm focus:outline-none focus:border-[#7A2338]" />
+        <button type="submit" name="action" value="remove" class="text-[#7D6A70] hover:text-[#7A2338] px-2 text-xl" aria-label="Entfernen">×</button>
+      </form>
+      <p class="w-24 text-right text-[#3A2A30] font-medium">{{ l.total_cents | euro }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="text-sm text-[#7D6A70] space-y-2 order-2 md:order-1">
+      {% if free_from and subtotal < free_from %}
+      <p class="text-[#4A3A40]">Noch <strong class="text-[#7A2338] font-medium">{{ (free_from - subtotal) | euro }}</strong> bis zum kostenlosen Versand.</p>
+      {% endif %}
+      <p>Lieferung nur innerhalb Deutschlands.</p>
+      <p>Es gelten unsere <a href="{{ surl('legal.agb') }}" class="underline underline-offset-2 hover:text-[#7A2338]">AGB</a>. Informationen zum <a href="{{ surl('legal.widerruf') }}" class="underline underline-offset-2 hover:text-[#7A2338]">Widerrufsrecht</a>.</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[#EADBD6] p-6 order-1 md:order-2">
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="text-[#7D6A70]">Zwischensumme</dt><dd>{{ subtotal | euro }}</dd></div>
+        <div class="flex justify-between"><dt class="text-[#7D6A70]">Versand</dt><dd>{% if shipping == 0 %}kostenlos{% else %}{{ shipping | euro }}{% endif %}</dd></div>
+        <div class="flex justify-between border-t border-[#EADBD6] pt-3 mt-3 text-lg">
+          <dt class="font-medium">Gesamt</dt><dd class="font-display text-2xl text-[#7A2338]">{{ total | euro }}</dd>
+        </div>
+      </dl>
+      <p class="text-xs text-[#7D6A70] mt-2">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+      {% if stripe_ready %}
+      <a href="{{ surl('shop.checkout_review') }}" class="block mt-6 w-full py-3.5 text-center rounded-full bg-[#7A2338] text-white font-medium tracking-wide hover:bg-[#5E1A2B] transition-colors">Zur Kasse</a>
+      <p class="text-xs text-[#7D6A70] mt-3 text-center">Im nächsten Schritt siehst du deine Bestellung noch einmal im Überblick.</p>
+      {% else %}
+      <p class="mt-6 text-sm text-[#7A2338]">Die Kasse ist gerade nicht verfügbar.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-20 rounded-2xl border border-dashed border-[#EBC9C3]">
+    <p class="font-display italic text-3xl text-[#7A2338]">Dein Warenkorb ist leer.</p>
+    <a href="{{ surl('shop.index') }}" class="inline-block mt-6 px-6 py-3 rounded-full border border-[#7A2338] text-[#7A2338] hover:bg-[#7A2338] hover:text-white transition-colors">Zur Kollektion</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

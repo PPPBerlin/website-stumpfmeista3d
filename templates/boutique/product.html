@@ -1,0 +1,150 @@
+{% extends "boutique/base.html" %}
+{% block title %}{{ product.name }} – Stumpfmeista3D Boutique{% endblock %}
+{% block meta_description %}{{ product.short_description or product.name }}{% endblock %}
+{% block og_title %}{{ product.name }}{% endblock %}
+{% block og_image %}{% if product.cover_image %}<meta property="og:image" content="{{ site_url }}{{ url_for('shop_common.product_image', filename=product.cover_image.filename) }}" />{% endif %}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": product.name,
+  "description": product.short_description or product.name,
+  "image": [site_url ~ url_for('shop_common.product_image', filename=product.cover_image.filename)] if product.cover_image else [],
+  "brand": {"@type": "Brand", "name": "Stumpfmeista3D Boutique"},
+  "offers": {
+    "@type": "AggregateOffer" if product.has_price_range else "Offer",
+    "priceCurrency": "EUR",
+    ("lowPrice" if product.has_price_range else "price"): "%.2f" % (product.min_price_cents / 100),
+    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else "https://schema.org/InStock",
+    "url": surl('shop.product', slug=product.slug, _external=True)
+  }
+} | tojson }}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-5 sm:px-8 pt-8 pb-4">
+  <a href="{{ surl('shop.index') }}" class="text-sm text-[#7D6A70] hover:text-[#7A2338]">← Zur Kollektion</a>
+  {% if not product.is_active or not product.show_in_boutique %}
+  <p class="mt-4 px-4 py-2 rounded-xl bg-[#F4E3DF] text-[#7A2338] text-xs">Vorschau — dieses Produkt ist in der Boutique (noch) nicht sichtbar.</p>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
+    {# Galerie #}
+    <div id="gallery" data-active="ring-2 ring-[#7A2338]" data-inactive="ring-0">
+      <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-[#F4E3DF]">
+        {% if product.images %}
+        <img id="main-image" src="{{ url_for('shop_common.product_image', filename=product.images[0].filename) }}"
+             alt="{{ product.images[0].alt or product.name }}" class="w-full h-full object-cover" />
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center font-display italic text-8xl text-[#EBC9C3]">B</div>
+        {% endif %}
+      </div>
+      {% if product.images | length > 1 %}
+      <div class="grid grid-cols-5 gap-3 mt-4">
+        {% for img in product.images %}
+        <button type="button" data-src="{{ url_for('shop_common.product_image', filename=img.filename) }}"
+                data-alt="{{ img.alt or product.name }}" aria-label="Bild {{ loop.index }} anzeigen"
+                class="thumb aspect-square rounded-xl overflow-hidden ring-offset-2 ring-offset-[#FBF7F2] {% if loop.first %}ring-2 ring-[#7A2338]{% else %}ring-0{% endif %}">
+          <img src="{{ url_for('shop_common.product_image', filename=img.filename) }}" alt="" loading="lazy" class="w-full h-full object-cover" />
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# Infos + Kauf #}
+    <div class="lg:pt-4">
+      <h1 class="font-display text-4xl sm:text-5xl text-[#3A2A30] leading-tight">{{ product.name }}</h1>
+      {% if product.short_description %}<p class="text-[#7D6A70] mt-3 text-lg">{{ product.short_description }}</p>{% endif %}
+
+      <p id="price" class="font-display text-4xl text-[#7A2338] mt-6">
+        {{ (variants[0].effective_price_cents if variants else product.price_cents) | euro }}
+      </p>
+      {% include 'boutique/_price_note.html' %}
+
+      <form method="POST" action="{{ surl('shop.cart_add') }}" class="mt-8 space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {% if variants | length > 1 %}
+        <fieldset>
+          <legend class="text-xs tracking-[0.2em] uppercase text-[#7D6A70] mb-3">{{ product.variant_label }}</legend>
+          <div class="flex flex-wrap gap-2">
+            {% set first_available = (variants | selectattr('stock', 'gt', 0) | first) %}
+            {% for v in variants %}
+            <label class="cursor-pointer">
+              <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
+                     data-price="{{ v.effective_price_cents | euro }}" data-stock="{{ v.stock }}"
+                     data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
+                     {% if v.stock <= 0 %}disabled{% endif %}
+                     {% if first_available and v.id == first_available.id %}checked{% endif %} />
+              <span class="block px-5 py-2.5 rounded-full border text-sm transition-all
+                           border-[#EADBD6] bg-white text-[#4A3A40]
+                           peer-checked:border-[#7A2338] peer-checked:bg-[#7A2338] peer-checked:text-white
+                           peer-disabled:opacity-40 peer-disabled:line-through peer-disabled:cursor-not-allowed
+                           peer-focus-visible:ring-2 peer-focus-visible:ring-[#B08D57] peer-focus-visible:ring-offset-2">
+                {{ v.name }}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        {% elif variants %}
+        <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
+               data-price="{{ variants[0].effective_price_cents | euro }}" data-stock="{{ variants[0].stock }}"
+               data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
+        {% endif %}
+
+        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#5C7A55]" data-low="text-sm text-[#B08D57]" data-out="text-sm text-[#7D6A70]"></p>
+
+        {% if not product.is_sold_out %}
+        <div class="flex gap-3">
+          <label for="qty" class="sr-only">Menge</label>
+          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_PER_ITEM }}"
+                 class="w-20 bg-white border border-[#EADBD6] rounded-full px-3 py-3 text-center text-[#3A2A30] focus:outline-none focus:border-[#7A2338]" />
+          <button type="submit" id="add-btn"
+                  class="flex-1 py-3.5 rounded-full bg-[#7A2338] text-white font-medium tracking-wide hover:bg-[#5E1A2B] transition-colors
+                         disabled:opacity-40 disabled:cursor-not-allowed">
+            In den Warenkorb
+          </button>
+        </div>
+        {% else %}
+        <p class="py-3.5 text-center rounded-full border border-[#EADBD6] text-[#7D6A70]">Leider ausverkauft</p>
+        {% endif %}
+      </form>
+
+      <ul class="mt-6 space-y-1.5 text-sm text-[#4A3A40]">
+        <li><span class="text-[#B08D57]">✦</span> Lieferzeit: {{ product.delivery_time }}</li>
+        <li><span class="text-[#B08D57]">✦</span> Versand innerhalb Deutschlands</li>
+      </ul>
+
+      {% if product.description %}
+      <div class="mt-10 pt-8 border-t border-[#EADBD6]">
+        <h2 class="font-display text-2xl text-[#3A2A30] mb-3">Beschreibung</h2>
+        <div class="text-[#4A3A40] leading-relaxed whitespace-pre-line">{{ product.description }}</div>
+      </div>
+      {% endif %}
+
+      <div class="mt-10 pt-8 border-t border-[#EADBD6]">
+        <h2 class="font-display text-2xl text-[#3A2A30] mb-3">Produktsicherheit</h2>
+        <dl class="text-sm space-y-2">
+          <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Artikelnummer</dt><dd id="sku" class="text-[#3A2A30]">–</dd></div>
+          {% if product.material %}<div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Material</dt><dd class="text-[#3A2A30]">{{ product.material }}</dd></div>{% endif %}
+          <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Hersteller</dt>
+            <dd class="text-[#3A2A30]">Paul-Philipp Pürst – Stumpfmeista3D<br>Wolfsgartenstraße 6, 12555 Berlin<br>info@stumpfmeista3d.de</dd></div>
+          {% if product.safety_info %}
+          <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Hinweise</dt>
+            <dd class="text-[#7A2338] whitespace-pre-line">{{ product.safety_info }}</dd></div>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/shop-product.js') }}"></script>
+{% endblock %}

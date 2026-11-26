@@ -1,0 +1,24 @@
+<header class="sticky top-0 z-40 bg-[#FBF7F2]/90 backdrop-blur border-b border-[#EADBD6]">
+  {% if not shop_public %}
+  <div class="bg-[#F4E3DF] text-[#7A2338] text-xs text-center py-1">
+    Admin-Vorschau — die Boutique ist öffentlich noch nicht sichtbar (BOUTIQUE_ENABLED=false)
+  </div>
+  {% endif %}
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
+    <a href="{{ surl('shop.index') }}" class="group leading-none">
+      <span class="block text-[10px] sm:text-xs tracking-[0.35em] uppercase text-[#B08D57]">Stumpfmeista3D</span>
+      <span class="block font-display italic text-3xl sm:text-4xl text-[#7A2338] -mt-0.5">Boutique</span>
+    </a>
+    <nav class="flex items-center gap-5 sm:gap-7 text-sm">
+      <a href="{{ surl('shop.index') }}" class="hidden sm:inline text-[#4A3A40] hover:text-[#7A2338] transition-colors">Kollektion</a>
+      <a href="{{ surl('legal.versand') }}" class="hidden sm:inline text-[#4A3A40] hover:text-[#7A2338] transition-colors">Versand</a>
+      <a href="{{ surl('shop.cart') }}" aria-label="Warenkorb, {{ cart_count }} Artikel"
+         class="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#7A2338]/30 text-[#7A2338] hover:bg-[#7A2338] hover:text-white transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        <span>{{ cart_count }}</span>
+      </a>
+    </nav>
+  </div>
+</header>

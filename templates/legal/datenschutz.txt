@@ -1,0 +1,102 @@
+## 1. Verantwortlicher
+
+**Paul-Philipp Pürst · Stumpfmeista3D** (einschließlich „Stumpfmeista3D Boutique“)
+Wolfsgartenstraße 6, 12555 Berlin
+E-Mail: info@stumpfmeista3d.de
+Telefon: 0172 / 4977 666
+
+## 2. Hosting & Server-Logs
+
+Diese Website wird auf einem eigenen Server in Deutschland betrieben. Beim Aufruf der Website wird vom Server automatisch eine **Server-Log-Datei** erstellt, die folgende Informationen enthält:
+- IP-Adresse des anfragenden Geräts (anonymisiert)
+- Datum und Uhrzeit des Zugriffs
+- Aufgerufene URL
+- HTTP-Statuscode
+- Übertragene Datenmenge
+- Browser und Betriebssystem (User-Agent)
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Betrieb und Sicherheit der Website). Die Logs werden nach spätestens 7 Tagen automatisch gelöscht.
+
+**Cloudflare:** Die Verbindung zu unserem Server läuft über das Netzwerk der Cloudflare, Inc. (101 Townsend St., San Francisco, CA 94107, USA; in der EU vertreten durch Cloudflare Germany GmbH). Cloudflare leitet die Anfragen weiter und schützt den Server vor Angriffen. Dabei verarbeitet Cloudflare deine IP-Adresse und technische Verbindungsdaten; eine Übermittlung in die USA ist möglich. Cloudflare ist unter dem EU-US Data Privacy Framework zertifiziert; mit Cloudflare besteht ein Auftragsverarbeitungsvertrag inkl. Standardvertragsklauseln. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und zuverlässigen Betrieb). Mehr: https://www.cloudflare.com/de-de/privacypolicy/
+
+## 3. Kontaktformular & Dateiuploads
+
+Wenn du das Kontaktformular nutzt, werden folgende Daten verarbeitet:
+- Vorname und Nachname
+- E-Mail-Adresse
+- Telefonnummer (optional)
+- Betreff und Nachrichteninhalt
+- Hochgeladene Dateien (STL, 3MF, PDF, Bilder) – optional
+
+**Zweck:** Bearbeitung deiner Anfrage und Vorbereitung eines möglichen Auftrags.
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung) bzw. Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Beantwortung von Anfragen).
+
+**Speicherdauer:** Anfragedaten werden nach Abschluss der Bearbeitung und Ablauf gesetzlicher Aufbewahrungsfristen gelöscht. Hochgeladene Dateien werden nach Abschluss des Projekts bzw. auf Wunsch sofort gelöscht.
+
+Zum Schutz vor Missbrauch wird die Anzahl der Formulareinsendungen pro IP-Adresse technisch begrenzt (Rate-Limiting). Dabei wird die IP-Adresse vorübergehend im Arbeitsspeicher des Servers gespeichert und nicht dauerhaft protokolliert.
+
+## 4. E-Mail-Kommunikation
+
+Wenn du uns eine E-Mail schickst, werden die von dir übermittelten Daten (E-Mail-Adresse, Name, Inhalt) zur Bearbeitung deiner Anfrage gespeichert. Diese Daten geben wir nicht ohne deine Einwilligung an Dritte weiter.
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO.
+
+## 5. Webanalyse mit Matomo
+
+Diese Website nutzt **Matomo** (ehemals Piwik), eine Open-Source-Software zur statistischen Auswertung von Besucherzugriffen. Matomo wird ausschließlich auf unserem eigenen Server in Deutschland betrieben — es werden **keine Daten an Dritte übertragen**.
+
+Matomo erfasst folgende Daten:
+- Anonymisierte IP-Adresse (letztes Oktett wird vor Speicherung gelöscht)
+- Aufgerufene Seiten und Verweildauer
+- Herkunft des Besuchs (z. B. Suchmaschine, direkter Aufruf)
+- Verwendeter Browser und Betriebssystem (allgemein)
+- Bildschirmauflösung (allgemein)
+
+**Cookielos — kein Banner nötig:** Matomo wird ohne Cookies betrieben. Es werden keine Tracking-Cookies gesetzt. Ebenso wird die „Do Not Track“-Einstellung des Browsers automatisch respektiert.
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Verbesserung des Angebots). Da keine personenbezogenen Daten gespeichert werden und kein Tracking über Sitzungsgrenzen hinaus stattfindet, ist keine Einwilligung erforderlich.
+
+**Widerspruch:** Du kannst die Erfassung jederzeit deaktivieren, indem du Do-Not-Track in deinem Browser aktivierst. Matomo respektiert diese Einstellung automatisch.
+
+Technisch notwendige Session-Cookies werden ausschließlich für den CSRF-Schutz der Formulare und für den Inhalt des Warenkorbs verwendet und beim Schließen des Browsers gelöscht (§ 25 Abs. 2 Nr. 2 TDDDG).
+
+## 6. Externe Ressourcen
+
+Schriften, Stylesheets und das Matomo-Analyse-Skript werden ausschließlich von unserem eigenen Server geladen. Es werden **keine Daten an Werbe- oder Trackingdienste** wie Google oder Facebook übertragen. Die Zahlungsabwicklung über Stripe ist in Abschnitt 8 beschrieben.
+
+## 7. Bestellungen im Online-Shop
+
+Wenn du im Shop bestellst, verarbeiten wir deinen Namen, deine E-Mail-Adresse, deine Lieferadresse, ggf. deine Telefonnummer sowie die bestellten Artikel, um den Kaufvertrag zu erfüllen, die Ware zu versenden und dich über den Stand der Bestellung zu informieren.
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. c DSGVO (gesetzliche Aufbewahrungspflichten).
+
+**Weitergabe:** Name und Lieferadresse geben wir an den beauftragten Versanddienstleister (z. B. DHL/Deutsche Post) weiter, soweit das für die Zustellung nötig ist.
+
+**Speicherdauer:** Bestelldaten werden aufgrund handels- und steuerrechtlicher Aufbewahrungspflichten (§ 147 AO, § 257 HGB) bis zu 10 Jahre gespeichert und danach gelöscht. Erklärungen über die Widerrufsfunktion speichern wir zum Nachweis für die Dauer möglicher Ansprüche.
+
+## 8. Zahlungsabwicklung über Stripe
+
+Die Bezahlung erfolgt über **Stripe Payments Europe, Ltd.**, 1 Grand Canal Street Lower, Grand Canal Dock, Dublin, D02 H210, Irland („Stripe“). Nach dem Klick auf „Zahlungspflichtig bestellen“ wirst du auf eine Zahlungsseite von Stripe weitergeleitet. Dort gibst du E-Mail-Adresse, Lieferadresse und Zahlungsdaten direkt bei Stripe ein — Zahlungsdaten (z. B. Kartennummer) erreichen unseren Server nicht.
+
+Stripe verarbeitet die Daten zur Zahlungsabwicklung, zur Betrugsprävention und zur Erfüllung gesetzlicher Pflichten. Je nach gewählter Zahlungsart werden Daten an den jeweiligen Anbieter (z. B. PayPal, Klarna, deine Bank) weitergegeben. Eine Übermittlung in die USA an die Stripe, Inc. ist möglich; Stripe ist unter dem EU-US Data Privacy Framework zertifiziert und setzt zusätzlich Standardvertragsklauseln ein. Auf der Stripe-Zahlungsseite setzt Stripe eigene Cookies.
+
+**Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) und Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherer Zahlung und Betrugsprävention).
+
+Datenschutzhinweise von Stripe: https://stripe.com/de/privacy
+
+## 9. Deine Rechte
+
+Du hast gegenüber uns folgende Rechte bezüglich deiner personenbezogenen Daten:
+- Auskunft (Art. 15 DSGVO)
+- Berichtigung (Art. 16 DSGVO)
+- Löschung (Art. 17 DSGVO)
+- Einschränkung der Verarbeitung (Art. 18 DSGVO)
+- Datenübertragbarkeit (Art. 20 DSGVO)
+- Widerspruch (Art. 21 DSGVO)
+
+Außerdem hast du das Recht, dich bei der zuständigen Aufsichtsbehörde zu beschweren. In Berlin ist das die **Berliner Beauftragte für Datenschutz und Informationsfreiheit**.
+
+Um deine Rechte auszuüben, wende dich an: info@stumpfmeista3d.de
+
+Stand: November 2026

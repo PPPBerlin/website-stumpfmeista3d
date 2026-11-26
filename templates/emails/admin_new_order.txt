@@ -1,4 +1,4 @@
-Neue bezahlte Bestellung {{ order.number }}
+Neue bezahlte Bestellung {{ order.number }} ({{ sf.name }})
 
 {% include 'emails/_order_items.txt' %}
 

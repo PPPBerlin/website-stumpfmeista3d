@@ -9,6 +9,8 @@
       {{ products|length }} Einträge ·
       Shop ist {% if config.SHOP_ENABLED %}<span class="text-[#39FF14]">öffentlich</span>{% else %}<span class="text-yellow-400">nur Vorschau</span>{% endif %}
       · <a href="{{ url_for('shop.index') }}" target="_blank" class="text-[#8B2FC9] hover:text-[#39FF14]">Shop ansehen ↗</a>
+      · Boutique ist {% if config.BOUTIQUE_ENABLED %}<span class="text-[#39FF14]">öffentlich</span>{% else %}<span class="text-yellow-400">nur Vorschau</span>{% endif %}
+      · <a href="{{ surl('shop.index', sf=boutique_sf) }}" target="_blank" class="text-[#F4C6C0] hover:text-[#39FF14]">Boutique ansehen ↗</a>
     </p>
   </div>
   <a href="{{ url_for('admin.product_new') }}"
@@ -27,6 +29,7 @@
         <th class="px-6 py-4 font-normal">Preis</th>
         <th class="px-6 py-4 font-normal">Varianten</th>
         <th class="px-6 py-4 font-normal">Bestand</th>
+        <th class="px-6 py-4 font-normal">Shops</th>
         <th class="px-6 py-4 font-normal">Status</th>
         <th class="px-6 py-4 font-normal"></th>
       </tr>
@@ -36,13 +39,17 @@
       <tr>
         <td class="px-6 py-3">
           <div class="w-12 h-12 rounded-lg overflow-hidden bg-[#130820] border border-[#8B2FC9]/20">
-            {% if p.cover_image %}<img src="{{ url_for('shop.product_image', filename=p.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
+            {% if p.cover_image %}<img src="{{ url_for('shop_common.product_image', filename=p.cover_image.filename) }}" alt="" class="w-full h-full object-cover" />{% endif %}
           </div>
         </td>
         <td class="px-6 py-3 text-gray-200 font-medium">{{ p.name }}<br><span class="text-xs text-gray-600">/shop/{{ p.slug }}</span></td>
         <td class="px-6 py-3 text-gray-300 whitespace-nowrap">{% if p.has_price_range %}ab {% endif %}{{ p.min_price_cents | euro }}</td>
         <td class="px-6 py-3 text-gray-400">{{ p.active_variants | length }}</td>
         <td class="px-6 py-3 {% if p.total_stock == 0 %}text-red-400{% elif p.total_stock <= 3 %}text-yellow-400{% else %}text-gray-300{% endif %}">{{ p.total_stock }}</td>
+        <td class="px-6 py-3 whitespace-nowrap text-xs">
+          {% if p.show_in_main %}<span class="px-2 py-0.5 rounded bg-[#39FF14]/10 text-[#39FF14]">S3D</span>{% endif %}
+          {% if p.show_in_boutique %}<span class="px-2 py-0.5 rounded bg-[#F4C6C0]/15 text-[#F4C6C0]">Boutique</span>{% endif %}
+        </td>
         <td class="px-6 py-3">
           {% if p.is_active %}
           <span class="px-2.5 py-1 rounded-full text-xs bg-[#39FF14]/15 text-[#39FF14]">Aktiv</span>

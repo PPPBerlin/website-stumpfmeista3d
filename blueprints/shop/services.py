@@ -17,8 +17,12 @@ from sqlalchemy import update
 
 from extensions import db, mail
 from models import Order, OrderItem, Product, ProductVariant
+from storefronts import current_sf, get_storefront, sf_context
 
-CART_KEY = 'cart'
+
+def _cart_key():
+    # Jedes Schaufenster hat seinen eigenen Warenkorb
+    return f'cart_{current_sf().key}'
 
 
 # ---------------------------------------------------------------------------
@@ -37,20 +41,20 @@ def format_euro(cents):
 # Warenkorb (in der signierten Flask-Session: {variant_id: menge})
 # ---------------------------------------------------------------------------
 def get_cart():
-    return dict(session.get(CART_KEY, {}))
+    return dict(session.get(_cart_key(), {}))
 
 
 def save_cart(cart):
-    session[CART_KEY] = {k: v for k, v in cart.items() if v > 0}
+    session[_cart_key()] = {k: v for k, v in cart.items() if v > 0}
     session.modified = True
 
 
 def clear_cart():
-    session.pop(CART_KEY, None)
+    session.pop(_cart_key(), None)
 
 
 def cart_count():
-    return sum(session.get(CART_KEY, {}).values())
+    return sum(session.get(_cart_key(), {}).values())
 
 
 def cart_lines():
@@ -60,13 +64,15 @@ def cart_lines():
     begrenzt Mengen auf den aktuellen Bestand.
     """
     cart = get_cart()
+    sf = current_sf()
     max_qty = current_app.config['SHOP_MAX_QTY_PER_ITEM']
     lines, problems = [], []
     changed = False
 
     for vid, qty in list(cart.items()):
         variant = db.session.get(ProductVariant, int(vid))
-        if (not variant or not variant.is_active or not variant.product.is_active):
+        if (not variant or not variant.is_active or not variant.product.is_active
+                or not variant.product.in_storefront(sf.key)):
             problems.append('Ein Artikel ist nicht mehr verfügbar und wurde entfernt.')
             cart.pop(vid)
             changed = True
@@ -120,7 +126,7 @@ class OutOfStock(Exception):
 
 def create_order_from_cart(lines, subtotal_cents):
     """Legt eine Bestellung im Status 'Offen' an und zieht den Bestand atomar ab."""
-    order = Order(status='Offen', subtotal_cents=subtotal_cents)
+    order = Order(status='Offen', subtotal_cents=subtotal_cents, storefront=current_sf().key)
     order.shipping_cents = shipping_for(subtotal_cents)
     order.total_cents = subtotal_cents + order.shipping_cents
 
@@ -235,7 +241,7 @@ def create_checkout_session(order, success_url, cancel_url, terms_url, withdrawa
         client_reference_id=order.number,
         metadata={'order_id': str(order.id), 'order_number': order.number},
         payment_intent_data={
-            'description': f'Bestellung {order.number}',
+            'description': f'{get_storefront(order.storefront).name} – Bestellung {order.number}',
             'metadata': {'order_id': str(order.id), 'order_number': order.number},
         },
         expires_at=expires_at,
@@ -327,61 +333,50 @@ def _send_async(msg):
     threading.Thread(target=run, daemon=True).start()
 
 
+def _order_mail(order, subject, template, to_customer=True, **extra):
+    """Rendert eine Bestell-Mail im Branding des Schaufensters der Bestellung."""
+    sf = get_storefront(order.storefront)
+    body = render_template(template, order=order, **sf_context(sf), **extra)
+    admin = current_app.config.get('ADMIN_EMAIL')
+    if to_customer:
+        msg = Message(subject=subject.format(shop=sf.name), recipients=[order.email], body=body)
+        if admin:
+            msg.reply_to = admin
+    else:
+        msg = Message(subject=subject.format(shop=sf.name), recipients=[admin], body=body)
+    return msg
+
+
 def send_order_confirmation(order):
     if not order.email:
         return
-    body = render_template('emails/order_confirmation.txt', order=order)
-    msg = Message(
-        subject=f'Deine Bestellung {order.number} bei Stumpfmeista3D',
-        recipients=[order.email],
-        body=body,
-    )
-    admin = current_app.config.get('ADMIN_EMAIL')
-    if admin:
-        msg.reply_to = admin
-    _send_async(msg)
+    _send_async(_order_mail(order, f'Deine Bestellung {order.number} bei {{shop}}',
+                            'emails/order_confirmation.txt'))
 
 
 def send_admin_order_notification(order):
-    admin = current_app.config.get('ADMIN_EMAIL')
-    if not admin:
+    if not current_app.config.get('ADMIN_EMAIL'):
         return
-    msg = Message(
-        subject=f'[Stumpfmeista3D] Neue Bestellung {order.number} — {format_euro(order.total_cents)}',
-        recipients=[admin],
-        body=render_template('emails/admin_new_order.txt', order=order),
-    )
-    _send_async(msg)
+    _send_async(_order_mail(
+        order, f'[{{shop}}] Neue Bestellung {order.number} — {format_euro(order.total_cents)}',
+        'emails/admin_new_order.txt', to_customer=False))
 
 
 def send_payment_failed(order):
     if not order.email:
         return
-    msg = Message(
-        subject=f'Zahlung für Bestellung {order.number} fehlgeschlagen',
-        recipients=[order.email],
-        body=render_template('emails/payment_failed.txt', order=order),
-    )
-    admin = current_app.config.get('ADMIN_EMAIL')
-    if admin:
-        msg.reply_to = admin
-        msg.bcc = [admin]
+    msg = _order_mail(order, f'Zahlung für Bestellung {order.number} fehlgeschlagen',
+                      'emails/payment_failed.txt')
+    if current_app.config.get('ADMIN_EMAIL'):
+        msg.bcc = [current_app.config['ADMIN_EMAIL']]
     _send_async(msg)
 
 
 def send_shipping_notification(order):
     if not order.email:
         return
-    msg = Message(
-        subject=f'Deine Bestellung {order.number} ist unterwegs',
-        recipients=[order.email],
-        body=render_template('emails/order_shipped.txt', order=order,
-                             tracking_url=tracking_url(order)),
-    )
-    admin = current_app.config.get('ADMIN_EMAIL')
-    if admin:
-        msg.reply_to = admin
-    _send_async(msg)
+    _send_async(_order_mail(order, f'Deine Bestellung {order.number} ist unterwegs',
+                            'emails/order_shipped.txt', tracking_url=tracking_url(order)))
 
 
 def tracking_url(order):

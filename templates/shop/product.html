@@ -11,7 +11,7 @@
   "@type": "Product",
   "name": product.name,
   "description": product.short_description or product.name,
-  "image": [site_url ~ url_for('shop.product_image', filename=product.cover_image.filename)] if product.cover_image else [],
+  "image": [site_url ~ url_for('shop_common.product_image', filename=product.cover_image.filename)] if product.cover_image else [],
   "brand": {"@type": "Brand", "name": "Stumpfmeista3D"},
   "offers": {
     "@type": "AggregateOffer" if product.has_price_range else "Offer",
@@ -36,10 +36,10 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-6">
     {# Galerie #}
-    <div>
+    <div id="gallery" data-active="border-[#39FF14]" data-inactive="border-[#8B2FC9]/30">
       <div class="aspect-square bg-[#130820] border border-[#8B2FC9]/25 rounded-xl overflow-hidden">
         {% if product.images %}
-        <img id="main-image" src="{{ url_for('shop.product_image', filename=product.images[0].filename) }}"
+        <img id="main-image" src="{{ url_for('shop_common.product_image', filename=product.images[0].filename) }}"
              alt="{{ product.images[0].alt or product.name }}" class="w-full h-full object-cover" />
         {% else %}
         <div class="w-full h-full flex items-center justify-center text-[#8B2FC9]/40 text-7xl">◈</div>
@@ -48,11 +48,11 @@
       {% if product.images | length > 1 %}
       <div class="grid grid-cols-5 gap-2 mt-3">
         {% for img in product.images %}
-        <button type="button" data-src="{{ url_for('shop.product_image', filename=img.filename) }}"
+        <button type="button" data-src="{{ url_for('shop_common.product_image', filename=img.filename) }}"
                 data-alt="{{ img.alt or product.name }}"
                 class="thumb aspect-square rounded-lg overflow-hidden border {% if loop.first %}border-[#39FF14]{% else %}border-[#8B2FC9]/30{% endif %} hover:border-[#39FF14] transition-colors"
                 aria-label="Bild {{ loop.index }} anzeigen">
-          <img src="{{ url_for('shop.product_image', filename=img.filename) }}" alt="" loading="lazy" class="w-full h-full object-cover" />
+          <img src="{{ url_for('shop_common.product_image', filename=img.filename) }}" alt="" loading="lazy" class="w-full h-full object-cover" />
         </button>
         {% endfor %}
       </div>
@@ -103,7 +103,7 @@
                data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
         {% endif %}
 
-        <p id="stock-info" class="text-sm"></p>
+        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#39FF14]" data-low="text-sm text-yellow-400" data-out="text-sm text-gray-500"></p>
 
         {% if not product.is_sold_out %}
         <div class="flex gap-3">
@@ -155,41 +155,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-  // Galerie
-  document.querySelectorAll('.thumb').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const main = document.getElementById('main-image');
-      main.src = btn.dataset.src; main.alt = btn.dataset.alt;
-      document.querySelectorAll('.thumb').forEach(b => b.classList.replace('border-[#39FF14]', 'border-[#8B2FC9]/30'));
-      btn.classList.replace('border-[#8B2FC9]/30', 'border-[#39FF14]');
-    });
-  });
-
-  // Preis + Bestand je Variante
-  const maxQty = {{ config.SHOP_MAX_QTY_PER_ITEM }};
-  function updateVariant() {
-    const sel = document.querySelector('input[name="variant_id"]:checked') ||
-                document.querySelector('input[type="hidden"][name="variant_id"]');
-    const info = document.getElementById('stock-info');
-    const qty = document.getElementById('qty');
-    const btn = document.getElementById('add-btn');
-    if (!sel) {
-      if (btn) btn.disabled = true;
-      const first = document.querySelector('input[name="variant_id"]');
-      if (first) document.getElementById('sku').textContent = first.dataset.sku;
-      return;
-    }
-    document.getElementById('price').textContent = sel.dataset.price;
-    document.getElementById('sku').textContent = sel.dataset.sku;
-    const stock = parseInt(sel.dataset.stock, 10);
-    if (qty) { qty.max = Math.min(stock, maxQty); if (+qty.value > +qty.max) qty.value = qty.max; }
-    if (btn) btn.disabled = stock <= 0;
-    if (stock <= 0) { info.textContent = 'Ausverkauft'; info.className = 'text-sm text-gray-500'; }
-    else if (stock <= 3) { info.textContent = `Nur noch ${stock} verfügbar`; info.className = 'text-sm text-yellow-400'; }
-    else { info.textContent = 'Auf Lager'; info.className = 'text-sm text-[#39FF14]'; }
-  }
-  document.querySelectorAll('input[name="variant_id"]').forEach(r => r.addEventListener('change', updateVariant));
-  updateVariant();
-</script>
+<script src="{{ url_for('static', filename='js/shop-product.js') }}"></script>
 {% endblock %}

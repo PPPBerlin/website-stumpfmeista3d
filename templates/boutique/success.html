@@ -1,0 +1,30 @@
+{% extends "boutique/base.html" %}
+{% block title %}Danke – Stumpfmeista3D Boutique{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-5 sm:px-8 pt-16 text-center">
+  {% if order.status in ('Bezahlt', 'Versendet') %}
+  <p class="text-[#B08D57] text-3xl">✦</p>
+  <h1 class="font-display text-5xl text-[#3A2A30] mt-3">Danke für deine Bestellung!</h1>
+  <p class="text-[#7D6A70] mt-4">Deine Bestellnummer ist <strong class="text-[#3A2A30] font-medium">{{ order.number }}</strong>. Die Bestellbestätigung ist an <strong class="text-[#3A2A30] font-medium">{{ order.email }}</strong> unterwegs.</p>
+  {% elif order.status == 'Offen' %}
+  <h1 class="font-display text-5xl text-[#3A2A30]">Bestellung eingegangen</h1>
+  <p class="text-[#7D6A70] mt-4">Deine Bestellnummer ist <strong class="text-[#3A2A30] font-medium">{{ order.number }}</strong>. Die Zahlung wird noch bestätigt (z. B. bei SEPA-Lastschrift). Sobald sie da ist, bekommst du die Bestellbestätigung per E-Mail.</p>
+  {% else %}
+  <h1 class="font-display text-5xl text-[#3A2A30]">Bestellung nicht abgeschlossen</h1>
+  <p class="text-[#7D6A70] mt-4">Die Zahlung wurde nicht abgeschlossen. Es wurde nichts berechnet.</p>
+  {% endif %}
+
+  {% if order.status != 'Abgebrochen' %}
+  <div class="mt-10 bg-white rounded-2xl border border-[#EADBD6] p-6 text-sm text-left">
+    {% for item in order.items %}
+    <div class="flex justify-between py-1.5"><span>{{ item.quantity }}× {{ item.display_name }}</span><span>{{ item.line_total_cents | euro }}</span></div>
+    {% endfor %}
+    <div class="flex justify-between py-1.5 text-[#7D6A70]"><span>Versand</span><span>{{ order.shipping_cents | euro }}</span></div>
+    <div class="flex justify-between pt-3 mt-2 border-t border-[#EADBD6]"><span class="font-medium">Gesamt</span><span class="font-display text-2xl text-[#7A2338]">{{ order.total_cents | euro }}</span></div>
+  </div>
+  {% endif %}
+  <a href="{{ surl('shop.index') }}" class="inline-block mt-10 text-sm text-[#7A2338] underline underline-offset-2">Zurück zur Kollektion</a>
+</div>
+{% endblock %}

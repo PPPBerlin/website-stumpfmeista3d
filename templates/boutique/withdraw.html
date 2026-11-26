@@ -1,0 +1,60 @@
+{% extends "boutique/base.html" %}
+{% block title %}Vertrag widerrufen – Stumpfmeista3D Boutique{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow" />{% endblock %}
+{% set input_cls = "w-full bg-[#FBF7F2] border border-[#EADBD6] rounded-xl px-4 py-3 text-[#3A2A30] placeholder-[#B9A9AE] focus:outline-none focus:border-[#7A2338] transition-colors" %}
+{% set label_cls = "block text-xs tracking-[0.15em] uppercase text-[#7D6A70] mb-1.5" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-5 sm:px-8 pt-12">
+  <p class="text-xs tracking-[0.35em] uppercase text-[#B08D57]">Widerrufsfunktion</p>
+  <h1 class="font-display text-5xl text-[#3A2A30] mt-2 mb-8">Vertrag widerrufen</h1>
+
+  {% if step == 'form' %}
+  <p class="text-[#4A3A40] mb-8 leading-relaxed">
+    Hier kannst du einen Kauf innerhalb der Widerrufsfrist widerrufen. Eine Begründung ist nicht nötig.
+    Du bekommst sofort eine Eingangsbestätigung per E-Mail. Details findest du in der
+    <a href="{{ surl('legal.widerruf') }}" class="underline underline-offset-2 text-[#7A2338]">Widerrufsbelehrung</a>.
+  </p>
+  <form method="POST" class="bg-white rounded-2xl border border-[#EADBD6] p-6 sm:p-8 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div><label for="w-name" class="{{ label_cls }}">Name *</label>
+      <input id="w-name" type="text" name="name" required value="{{ form.name }}" autocomplete="name" class="{{ input_cls }}" /></div>
+    <div><label for="w-email" class="{{ label_cls }}">E-Mail-Adresse *</label>
+      <input id="w-email" type="email" name="email" required value="{{ form.email }}" autocomplete="email" class="{{ input_cls }}" />
+      <p class="text-xs text-[#7D6A70] mt-1">An diese Adresse schicken wir die Eingangsbestätigung.</p></div>
+    <div><label for="w-order" class="{{ label_cls }}">Bestellnummer *</label>
+      <input id="w-order" type="text" name="order_number" required value="{{ form.order_number }}" placeholder="z. B. 2026-0007" class="{{ input_cls }}" />
+      <p class="text-xs text-[#7D6A70] mt-1">Steht in deiner Bestellbestätigung.</p></div>
+    <div><label for="w-msg" class="{{ label_cls }}">Welche Artikel? / Anmerkung (optional)</label>
+      <textarea id="w-msg" name="message" rows="3" class="{{ input_cls }} resize-none" placeholder="Leer lassen, wenn du die ganze Bestellung widerrufst.">{{ form.message }}</textarea></div>
+    <button type="submit" class="w-full py-3.5 rounded-full bg-[#7A2338] text-white font-medium hover:bg-[#5E1A2B] transition-colors">Weiter zur Bestätigung</button>
+  </form>
+
+  {% elif step == 'review' %}
+  <p class="text-[#4A3A40] mb-6">Bitte prüfe deine Angaben und bestätige den Widerruf.</p>
+  <form method="POST" class="bg-white rounded-2xl border border-[#7A2338]/30 p-6 sm:p-8 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="step" value="confirm" />
+    {% for k in ('name', 'email', 'order_number', 'message') %}<input type="hidden" name="{{ k }}" value="{{ form[k] }}" />{% endfor %}
+    <dl class="text-sm space-y-3">
+      <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Name</dt><dd>{{ form.name }}</dd></div>
+      <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">E-Mail</dt><dd class="break-all">{{ form.email }}</dd></div>
+      <div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Bestellnummer</dt><dd>{{ form.order_number }}</dd></div>
+      {% if form.message %}<div class="flex gap-4"><dt class="text-[#7D6A70] w-32 shrink-0">Anmerkung</dt><dd class="whitespace-pre-line">{{ form.message }}</dd></div>{% endif %}
+    </dl>
+    <p class="text-sm border-t border-[#EADBD6] pt-4">Hiermit widerrufe ich den mit der oben genannten Bestellung geschlossenen Kaufvertrag.</p>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button type="submit" class="flex-1 py-3.5 rounded-full bg-[#7A2338] text-white font-medium hover:bg-[#5E1A2B] transition-colors">Widerruf bestätigen</button>
+      <a href="{{ surl('legal.withdraw') }}" class="flex-1 text-center py-3.5 rounded-full border border-[#EADBD6] text-[#7D6A70] hover:border-[#7A2338]">Abbrechen</a>
+    </div>
+  </form>
+
+  {% else %}
+  <div class="bg-white rounded-2xl border border-[#B08D57]/40 p-6 sm:p-8 space-y-4 text-[#4A3A40]">
+    <p class="font-display text-3xl text-[#7A2338]">Dein Widerruf ist eingegangen.</p>
+    <p>Eingegangen am {{ withdrawal.created_at | berlin('%d.%m.%Y um %H:%M') }} Uhr zur Bestellung <strong class="font-medium text-[#3A2A30]">{{ withdrawal.order_number }}</strong>.</p>
+    <p>Eine Eingangsbestätigung ist an <strong class="font-medium text-[#3A2A30]">{{ withdrawal.email }}</strong> unterwegs. Wir melden uns mit allen Infos zur Rücksendung.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

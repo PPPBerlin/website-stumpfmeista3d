@@ -171,6 +171,9 @@ class Product(db.Model):
     material = db.Column(db.String(200), nullable=True)
     safety_info = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=False)
+    # In welchen Schaufenstern erscheint das Produkt? (siehe storefronts.py)
+    show_in_main = db.Column(db.Boolean, nullable=False, default=True, server_default='1')
+    show_in_boutique = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
     sort_order = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -181,6 +184,13 @@ class Product(db.Model):
     images = db.relationship('ProductImage', backref='product',
                              order_by='ProductImage.position',
                              cascade='all, delete-orphan')
+
+    def in_storefront(self, key):
+        return bool(getattr(self, f'show_in_{key}', False))
+
+    @property
+    def storefront_keys(self):
+        return [k for k in ('main', 'boutique') if self.in_storefront(k)]
 
     @property
     def active_variants(self):
@@ -263,6 +273,8 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.String(20), unique=True, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='Offen')
+    # Schaufenster, in dem bestellt wurde ('main' / 'boutique')
+    storefront = db.Column(db.String(20), nullable=False, default='main', server_default='main')
 
     # Kundendaten (kommen nach Zahlung von Stripe)
     email = db.Column(db.String(200), nullable=True)
@@ -338,6 +350,7 @@ class Withdrawal(db.Model):
     # Automatisch zugeordnet, wenn Bestellnummer + E-Mail passen
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=True)
     is_processed = db.Column(db.Boolean, nullable=False, default=False)
+    storefront = db.Column(db.String(20), nullable=False, default='main', server_default='main')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     order = db.relationship('Order', backref='withdrawals')
