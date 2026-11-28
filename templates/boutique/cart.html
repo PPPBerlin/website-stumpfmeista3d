@@ -15,14 +15,14 @@
       </a>
       <div class="flex-1 min-w-[10rem]">
         <a href="{{ surl('shop.product', slug=l.product.slug) }}" class="font-display text-xl text-[#3A2A30] hover:text-[#7A2338]">{{ l.title }}</a>
-        <p class="text-xs text-[#7D6A70] mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.product.delivery_time }}</p>
+        <p class="text-xs text-[#7D6A70] mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.delivery }}</p>
       </div>
       <form method="POST" action="{{ surl('shop.cart_update') }}" class="flex items-center gap-2">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="variant_id" value="{{ l.variant.id }}" />
         <label for="qty-{{ l.variant.id }}" class="sr-only">Menge</label>
         <input id="qty-{{ l.variant.id }}" type="number" name="qty" value="{{ l.qty }}" min="0"
-               max="{{ [l.variant.stock, config.SHOP_MAX_QTY_PER_ITEM] | min }}" onchange="this.form.submit()"
+               max="{{ l.variant.qty_input_max }}" onchange="this.form.submit()"
                class="w-16 bg-[#FBF7F2] border border-[#EADBD6] rounded-full px-2 py-2 text-center text-sm focus:outline-none focus:border-[#7A2338]" />
         <button type="submit" name="action" value="remove" class="text-[#7D6A70] hover:text-[#7A2338] px-2 text-xl" aria-label="Entfernen">×</button>
       </form>
@@ -42,12 +42,34 @@
     <div class="bg-white rounded-2xl border border-[#EADBD6] p-6 order-1 md:order-2">
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between"><dt class="text-[#7D6A70]">Zwischensumme</dt><dd>{{ subtotal | euro }}</dd></div>
+        {% if discount_cents %}
+        <div class="flex justify-between"><dt class="text-[#7D6A70]">Rabatt ({{ discount_code.code }})</dt><dd class="text-[#7A2338]">−{{ discount_cents | euro }}</dd></div>
+        {% endif %}
         <div class="flex justify-between"><dt class="text-[#7D6A70]">Versand</dt><dd>{% if shipping == 0 %}kostenlos{% else %}{{ shipping | euro }}{% endif %}</dd></div>
         <div class="flex justify-between border-t border-[#EADBD6] pt-3 mt-3 text-lg">
           <dt class="font-medium">Gesamt</dt><dd class="font-display text-2xl text-[#7A2338]">{{ total | euro }}</dd>
         </div>
       </dl>
       <p class="text-xs text-[#7D6A70] mt-2">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+
+      <form method="POST" action="{{ surl('shop.cart_discount') }}" class="mt-5 pt-4 border-t border-[#EADBD6]">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% if discount_code %}
+        <div class="flex items-center justify-between gap-3 text-sm">
+          <p class="text-[#4A3A40]">Code <span class="tracking-wider text-[#7A2338] font-medium">{{ discount_code.code }}</span> · {{ discount_code.label }}</p>
+          <button type="submit" name="action" value="remove" class="text-xs text-[#7D6A70] hover:text-[#7A2338] underline underline-offset-2">entfernen</button>
+        </div>
+        {% else %}
+        <label for="discount-code" class="block text-xs tracking-[0.15em] uppercase text-[#7D6A70] mb-2">Rabattcode</label>
+        <div class="flex gap-2">
+          <input id="discount-code" type="text" name="code" value="{{ discount_input }}" autocomplete="off" autocapitalize="characters"
+                 class="flex-1 min-w-0 bg-[#FBF7F2] border border-[#EADBD6] rounded-full px-4 py-2 text-sm uppercase tracking-wider focus:outline-none focus:border-[#7A2338]" />
+          <button type="submit" class="px-5 py-2 rounded-full border border-[#7A2338] text-[#7A2338] text-sm hover:bg-[#7A2338] hover:text-white transition-colors">Einlösen</button>
+        </div>
+        {% if discount_input and discount_error %}<p class="text-xs text-[#7A2338] mt-2">{{ discount_error }}</p>{% endif %}
+        {% endif %}
+      </form>
+
       {% if stripe_ready %}
       <a href="{{ surl('shop.checkout_review') }}" class="block mt-6 w-full py-3.5 text-center rounded-full bg-[#7A2338] text-white font-medium tracking-wide hover:bg-[#5E1A2B] transition-colors">Zur Kasse</a>
       <p class="text-xs text-[#7D6A70] mt-3 text-center">Im nächsten Schritt siehst du deine Bestellung noch einmal im Überblick.</p>

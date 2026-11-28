@@ -99,12 +99,32 @@ def cart():
     lines, subtotal, problems = svc.cart_lines()
     for p in problems:
         flash(p, 'error')
-    shipping = svc.shipping_for(subtotal) if lines else 0
+    totals = svc.cart_totals(subtotal)
+    if not lines:
+        totals['shipping'] = totals['total'] = 0
     free_from = current_app.config['SHOP_FREE_SHIPPING_FROM_CENTS']
-    return render_template(tpl('cart.html'), lines=lines, subtotal=subtotal,
-                           shipping=shipping, total=subtotal + shipping,
-                           free_from=free_from,
+    return render_template(tpl('cart.html'), lines=lines, **totals, free_from=free_from,
                            stripe_ready=svc.stripe_configured())
+
+
+@shop_bp.route('/warenkorb/rabattcode', methods=['POST'])
+@limiter.limit('20 per hour')
+def cart_discount():
+    if request.form.get('action') == 'remove':
+        svc.clear_discount_input()
+        flash('Rabattcode entfernt.', 'info')
+        return redirect(sf_url('shop.cart'))
+    code = svc.normalize_code(request.form.get('code'))
+    if not code:
+        return redirect(sf_url('shop.cart'))
+    svc.set_discount_input(code)
+    _, subtotal, _ = svc.cart_lines()
+    totals = svc.cart_totals(subtotal)
+    if totals['discount_code']:
+        flash(f'Rabattcode {code} eingelöst.', 'success')
+    else:
+        flash(totals['discount_error'], 'error')
+    return redirect(sf_url('shop.cart'))
 
 
 @shop_bp.route('/warenkorb/hinzufuegen', methods=['POST'])
@@ -120,13 +140,13 @@ def cart_add():
     qty = max(1, request.form.get('qty', 1, type=int))
     cart = svc.get_cart()
     key = str(variant.id)
-    limit = min(variant.stock, current_app.config['SHOP_MAX_QTY_PER_ITEM'])
+    limit = variant.max_qty
     new_qty = min(cart.get(key, 0) + qty, limit)
     if new_qty <= 0:
         flash('Leider ausverkauft.', 'error')
         return redirect(sf_url('shop.product', slug=variant.product.slug))
     if new_qty < cart.get(key, 0) + qty:
-        flash(f'Es sind nur {limit} Stück verfügbar — Menge angepasst.', 'info')
+        flash('Diese Menge ist leider nicht verfügbar — wir haben sie angepasst.', 'info')
     else:
         flash('Zum Warenkorb hinzugefügt.', 'success')
     cart[key] = new_qty
@@ -171,9 +191,8 @@ def checkout_review():
         flash(p, 'error')
     if not lines or problems:
         return redirect(sf_url('shop.cart'))
-    shipping = svc.shipping_for(subtotal)
-    return render_template(tpl('checkout.html'), lines=lines, subtotal=subtotal,
-                           shipping=shipping, total=subtotal + shipping,
+    totals = svc.cart_totals(subtotal)
+    return render_template(tpl('checkout.html'), lines=lines, **totals,
                            stripe_ready=svc.stripe_configured())
 
 
@@ -192,8 +211,16 @@ def checkout():
             flash(p, 'error')
         return redirect(sf_url('shop.cart'))
 
+    # Der Kunde muss genau den Preis zahlen, den er vor dem Klick gesehen hat
+    totals = svc.cart_totals(subtotal)
+    expected = request.form.get('expected_total', type=int)
+    if expected is not None and expected != totals['total']:
+        flash('Der Gesamtpreis hat sich gerade geändert — bitte prüfe deine Bestellung erneut.',
+              'error')
+        return redirect(sf_url('shop.checkout_review'))
+
     try:
-        order = svc.create_order_from_cart(lines, subtotal)
+        order = svc.create_order_from_cart(lines, totals)
     except svc.OutOfStock as e:
         flash(f'„{e}" wurde gerade verkauft — bitte prüfe deinen Warenkorb.', 'error')
         return redirect(sf_url('shop.cart'))
@@ -237,6 +264,7 @@ def success():
         current_app.logger.error(f'Session-Abgleich fehlgeschlagen ({order.number}): {e}')
     if order.status in ('Offen', 'Bezahlt'):
         svc.clear_cart()
+        svc.clear_discount_input()
         session.pop(_pending_key(), None)
     return render_template(tpl('success.html'), order=order)
 

@@ -9,6 +9,12 @@ Die Versandkosten fallen einmal pro Bestellung an, unabhängig von der Anzahl de
 
 Die Lieferzeit steht auf jeder Produktseite. Sie beginnt am Tag nach dem Zahlungseingang. Sobald dein Paket unterwegs ist, bekommst du eine E-Mail mit Sendungsnummer.
 
+Viele Artikel fertigen wir erst nach deiner Bestellung für dich an — die angegebene Lieferzeit enthält die Fertigung schon. Bestellst du größere Mengen, kann sich die Lieferzeit um einige Werktage verlängern. Das steht dann auf der Produktseite, und die genaue Lieferzeit für deine Bestellung siehst du im Warenkorb und in der Bestellübersicht.
+
+## Rabattcodes
+
+Einen Rabattcode löst du im Warenkorb ein. Der Rabatt wird sofort abgezogen und steht in der Bestellübersicht, bevor du bestellst.
+
 ## Zahlung
 
 Bezahlt wird sicher über unseren Zahlungsdienstleister **Stripe**. Je nach Verfügbarkeit stehen dir u. a. Kredit-/Debitkarte, PayPal, Klarna, SEPA-Lastschrift, Apple Pay und Google Pay zur Auswahl — welche genau, siehst du auf der Zahlungsseite.

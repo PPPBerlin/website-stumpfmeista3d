@@ -113,13 +113,28 @@
       </div>
     </div>
 
+    {% set mto = (product.made_to_order if product else form.get('made_to_order')) %}
+    <div class="rounded-lg border border-[#8B2FC9]/30 bg-[#130820]/60 p-4 space-y-3">
+      <label class="flex items-center gap-3 text-sm text-gray-200 cursor-pointer">
+        <input type="checkbox" id="made_to_order" name="made_to_order" value="1" class="w-4 h-4 accent-[#39FF14]" {% if mto %}checked{% endif %} />
+        Wird nach Bestellung gefertigt <span class="text-xs text-gray-600">(kein Bestand nötig, nie ausverkauft)</span>
+      </label>
+      <div id="mto-extra" class="flex flex-wrap items-center gap-2 text-sm text-gray-400 pl-7" {% if not mto %}hidden{% endif %}>
+        <span>+1 Werktag Lieferzeit je</span>
+        <input type="number" min="1" name="extra_day_per_units" value="{{ form.get('extra_day_per_units') or (product.extra_day_per_units if product and product.extra_day_per_units else '') }}"
+               class="w-20 bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-1.5 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]" placeholder="10" />
+        <span>Stück</span>
+        <p class="w-full text-xs text-gray-600">Beispiel 10: bis 9 Stück gilt die Lieferzeit oben, ab 10 Stück +1 Werktag, ab 20 Stück +2 … (gezählt über alle Varianten). Leer = unabhängig von der Menge. Die Lieferzeit oben sollte die Fertigung schon enthalten, z. B. „4–6 Werktage“.</p>
+      </div>
+    </div>
+
     <div class="overflow-x-auto">
       <table class="w-full text-sm min-w-[40rem]">
         <thead>
           <tr class="text-left text-xs text-gray-600">
             <th class="pb-2 font-normal">Name *</th>
             <th class="pb-2 font-normal w-28">Preis (leer = Standard)</th>
-            <th class="pb-2 font-normal w-20">Bestand</th>
+            <th class="pb-2 font-normal w-20">Bestand<span class="mto-hint text-[10px] block text-gray-700" {% if not mto %}hidden{% endif %}>nicht genutzt</span></th>
             <th class="pb-2 font-normal w-28">SKU</th>
             <th class="pb-2 font-normal w-14 text-center">Aktiv</th>
             <th class="pb-2 font-normal w-14 text-center">Löschen</th>
@@ -195,6 +210,18 @@
 
 {% block scripts %}
 <script>
+  const mtoBox = document.getElementById('made_to_order');
+  function syncMto() {
+    const on = mtoBox.checked;
+    document.getElementById('mto-extra').hidden = !on;
+    document.querySelectorAll('.mto-hint').forEach(el => el.hidden = !on);
+    document.querySelectorAll('input[name$="-stock"]').forEach(el => {
+      el.readOnly = on; el.classList.toggle('opacity-30', on);
+    });
+  }
+  mtoBox.addEventListener('change', syncMto);
+  syncMto();
+
   document.getElementById('add-variant').addEventListener('click', () => {
     const body = document.getElementById('variant-rows');
     const idx = Date.now();
@@ -209,6 +236,7 @@
       <td class="py-1 text-center"><button type="button" class="text-red-400 text-lg" aria-label="Zeile entfernen">×</button></td>`;
     tr.querySelector('button').addEventListener('click', () => tr.remove());
     body.appendChild(tr);
+    syncMto();
     tr.querySelector('input').focus();
   });
 </script>

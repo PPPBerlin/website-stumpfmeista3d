@@ -46,6 +46,7 @@
         ('admin.projects',   '◐ Projekte',   '/admin/projekte'),
         ('admin.orders',     '◆ Bestellungen', '/admin/bestellungen'),
         ('admin.products',   '◇ Produkte',   '/admin/produkte'),
+        ('admin.discounts',  '✂ Rabattcodes', '/admin/rabattcodes'),
       ] %}
       {% for endpoint, label, path in nav_items %}
         <a href="{{ url_for(endpoint) }}"

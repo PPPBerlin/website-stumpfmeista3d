@@ -17,7 +17,7 @@
     "@type": "AggregateOffer" if product.has_price_range else "Offer",
     "priceCurrency": "EUR",
     ("lowPrice" if product.has_price_range else "price"): "%.2f" % (product.min_price_cents / 100),
-    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else "https://schema.org/InStock",
+    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else ("https://schema.org/MadeToOrder" if product.made_to_order else "https://schema.org/InStock"),
     "url": site_url ~ url_for('shop.product', slug=product.slug)
   }
 } | tojson }}
@@ -78,13 +78,13 @@
         <fieldset>
           <legend class="block text-xs text-gray-400 uppercase tracking-wider mb-2">{{ product.variant_label }}</legend>
           <div class="flex flex-wrap gap-2">
-            {% set first_available = (variants | selectattr('stock', 'gt', 0) | first) %}
+            {% set first_available = (variants | selectattr('available') | first) %}
             {% for v in variants %}
             <label class="cursor-pointer">
               <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
-                     data-price="{{ v.effective_price_cents | euro }}" data-stock="{{ v.stock }}"
+                     data-price="{{ v.effective_price_cents | euro }}" data-available="{{ 1 if v.available else 0 }}"
                      data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
-                     {% if v.stock <= 0 %}disabled{% endif %}
+                     {% if not v.available %}disabled{% endif %}
                      {% if first_available and v.id == first_available.id %}checked{% endif %} />
               <span class="block px-4 py-2 rounded-lg border text-sm transition-all
                            border-[#8B2FC9]/40 text-gray-300
@@ -99,16 +99,17 @@
         </fieldset>
         {% elif variants %}
         <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
-               data-price="{{ variants[0].effective_price_cents | euro }}" data-stock="{{ variants[0].stock }}"
+               data-price="{{ variants[0].effective_price_cents | euro }}" data-available="{{ 1 if variants[0].available else 0 }}"
                data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
         {% endif %}
 
-        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#39FF14]" data-low="text-sm text-yellow-400" data-out="text-sm text-gray-500"></p>
+        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#39FF14]" data-out="text-sm text-gray-500"
+           data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
 
         {% if not product.is_sold_out %}
         <div class="flex gap-3">
           <label for="qty" class="sr-only">Menge</label>
-          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_PER_ITEM }}"
+          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_MADE_TO_ORDER if product.made_to_order else config.SHOP_MAX_QTY_PER_ITEM }}"
                  class="w-20 bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-3 text-center text-gray-100 focus:outline-none focus:border-[#39FF14]" />
           <button type="submit" id="add-btn"
                   class="flex-1 py-3 bg-[#39FF14] text-[#130820] font-bold rounded-lg hover:bg-[#39FF14]/90 transition-all
@@ -124,6 +125,9 @@
       <p class="mt-5 text-sm text-gray-400 flex items-center gap-2">
         <span class="text-[#39FF14]">▸</span> Lieferzeit: {{ product.delivery_time }}
       </p>
+      {% if product.made_to_order and product.extra_day_per_units %}
+      <p class="mt-1 text-xs text-gray-500 pl-5">Ab {{ product.extra_day_per_units }} Stück verlängert sich die Lieferzeit um 1 Werktag (ab {{ product.extra_day_per_units * 2 }} Stück um 2 usw.).</p>
+      {% endif %}
       <p class="mt-1 text-sm text-gray-400 flex items-center gap-2">
         <span class="text-[#39FF14]">▸</span> Versand innerhalb Deutschlands
       </p>

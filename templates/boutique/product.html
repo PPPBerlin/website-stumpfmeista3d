@@ -17,7 +17,7 @@
     "@type": "AggregateOffer" if product.has_price_range else "Offer",
     "priceCurrency": "EUR",
     ("lowPrice" if product.has_price_range else "price"): "%.2f" % (product.min_price_cents / 100),
-    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else "https://schema.org/InStock",
+    "availability": "https://schema.org/OutOfStock" if product.is_sold_out else ("https://schema.org/MadeToOrder" if product.made_to_order else "https://schema.org/InStock"),
     "url": surl('shop.product', slug=product.slug, _external=True)
   }
 } | tojson }}
@@ -72,13 +72,13 @@
         <fieldset>
           <legend class="text-xs tracking-[0.2em] uppercase text-[#7D6A70] mb-3">{{ product.variant_label }}</legend>
           <div class="flex flex-wrap gap-2">
-            {% set first_available = (variants | selectattr('stock', 'gt', 0) | first) %}
+            {% set first_available = (variants | selectattr('available') | first) %}
             {% for v in variants %}
             <label class="cursor-pointer">
               <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
-                     data-price="{{ v.effective_price_cents | euro }}" data-stock="{{ v.stock }}"
+                     data-price="{{ v.effective_price_cents | euro }}" data-available="{{ 1 if v.available else 0 }}"
                      data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
-                     {% if v.stock <= 0 %}disabled{% endif %}
+                     {% if not v.available %}disabled{% endif %}
                      {% if first_available and v.id == first_available.id %}checked{% endif %} />
               <span class="block px-5 py-2.5 rounded-full border text-sm transition-all
                            border-[#EADBD6] bg-white text-[#4A3A40]
@@ -93,16 +93,17 @@
         </fieldset>
         {% elif variants %}
         <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
-               data-price="{{ variants[0].effective_price_cents | euro }}" data-stock="{{ variants[0].stock }}"
+               data-price="{{ variants[0].effective_price_cents | euro }}" data-available="{{ 1 if variants[0].available else 0 }}"
                data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
         {% endif %}
 
-        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#5C7A55]" data-low="text-sm text-[#B08D57]" data-out="text-sm text-[#7D6A70]"></p>
+        <p id="stock-info" class="text-sm" data-ok="text-sm text-[#5C7A55]" data-out="text-sm text-[#7D6A70]"
+           data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
 
         {% if not product.is_sold_out %}
         <div class="flex gap-3">
           <label for="qty" class="sr-only">Menge</label>
-          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_PER_ITEM }}"
+          <input id="qty" type="number" name="qty" value="1" min="1" max="{{ config.SHOP_MAX_QTY_MADE_TO_ORDER if product.made_to_order else config.SHOP_MAX_QTY_PER_ITEM }}"
                  class="w-20 bg-white border border-[#EADBD6] rounded-full px-3 py-3 text-center text-[#3A2A30] focus:outline-none focus:border-[#7A2338]" />
           <button type="submit" id="add-btn"
                   class="flex-1 py-3.5 rounded-full bg-[#7A2338] text-white font-medium tracking-wide hover:bg-[#5E1A2B] transition-colors
@@ -117,6 +118,9 @@
 
       <ul class="mt-6 space-y-1.5 text-sm text-[#4A3A40]">
         <li><span class="text-[#B08D57]">✦</span> Lieferzeit: {{ product.delivery_time }}</li>
+        {% if product.made_to_order and product.extra_day_per_units %}
+        <li class="text-xs text-[#7D6A70] pl-5">Ab {{ product.extra_day_per_units }} Stück verlängert sich die Lieferzeit um 1 Werktag (ab {{ product.extra_day_per_units * 2 }} Stück um 2 usw.).</li>
+        {% endif %}
         <li><span class="text-[#B08D57]">✦</span> Versand innerhalb Deutschlands</li>
       </ul>
 

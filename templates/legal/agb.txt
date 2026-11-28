@@ -20,8 +20,8 @@ Die Darstellung der Produkte im Online-Shop stellt kein rechtlich bindendes Ange
 
 Der Bestellvorgang läuft wie folgt ab:
 - Sie wählen ein Produkt und gegebenenfalls eine Ausführung (z. B. Farbe) aus und legen es in den Warenkorb.
-- Im Warenkorb können Sie Mengen ändern oder Artikel entfernen. Über „Zur Kasse“ gelangen Sie zur Bestellübersicht.
-- Die Bestellübersicht zeigt alle Artikel, Einzel- und Gesamtpreise, Versandkosten und Lieferzeit. Eingabefehler können Sie über „Warenkorb bearbeiten“ jederzeit korrigieren.
+- Im Warenkorb können Sie Mengen ändern, Artikel entfernen und einen Rabattcode einlösen. Über „Zur Kasse“ gelangen Sie zur Bestellübersicht.
+- Die Bestellübersicht zeigt alle Artikel, Einzel- und Gesamtpreise, einen etwaigen Rabatt, Versandkosten und Lieferzeit. Eingabefehler können Sie über „Warenkorb bearbeiten“ jederzeit korrigieren.
 - Mit Klick auf den Button „Zahlungspflichtig bestellen“ geben Sie ein verbindliches Angebot zum Kauf der im Warenkorb enthaltenen Waren ab.
 - Anschließend werden Sie zur Zahlungsseite unseres Zahlungsdienstleisters Stripe weitergeleitet. Dort geben Sie Ihre E-Mail-Adresse, Lieferadresse und Zahlungsdaten ein und schließen den Zahlungsvorgang ab.
 
@@ -41,6 +41,8 @@ Alle Preise sind Endpreise. Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG 
 
 Zusätzlich fallen Versandkosten an. Deren Höhe wird auf der Seite „Versand & Zahlung“ ({{ sf_base }}/versand), im Warenkorb und vor Abschluss der Bestellung angezeigt. Wir liefern ausschließlich an Adressen in Deutschland.
 
+Rabattcodes können vor Abgabe der Bestellung im Warenkorb eingelöst werden. Es gelten die bei Ausgabe des Codes genannten Bedingungen (z. B. Gültigkeitszeitraum, Mindestbestellwert). Pro Bestellung kann ein Rabattcode eingelöst werden. Rabattcodes können nicht nachträglich angerechnet, nicht bar ausgezahlt und nicht mit anderen Rabattcodes kombiniert werden. Bei einem Widerruf erstatten wir den tatsächlich gezahlten Preis; bei einem Teilwiderruf wird der Rabatt anteilig auf die zurückgegebenen Artikel angerechnet.
+
 ## § 6 Zahlung
 
 Die Zahlung erfolgt über den Zahlungsdienstleister Stripe Payments Europe, Ltd. (1 Grand Canal Street Lower, Grand Canal Dock, Dublin, Irland). Die verfügbaren Zahlungsarten werden auf der Zahlungsseite angezeigt.
@@ -51,7 +53,9 @@ Der Kaufpreis ist mit Vertragsschluss (§ 3) fällig und wird im selben Schritt 
 
 Die Lieferzeit ist auf der jeweiligen Produktseite angegeben. Sie beginnt am Tag nach Zahlungseingang. Fällt das Ende der Frist auf einen Samstag, Sonntag oder gesetzlichen Feiertag am Lieferort, endet die Frist am nächsten Werktag.
 
-Ist ein Artikel trotz Bestandsangabe ausnahmsweise nicht lieferbar, informieren wir Sie unverzüglich und erstatten bereits geleistete Zahlungen umgehend.
+Artikel mit dem Hinweis „Wird nach deiner Bestellung für dich gefertigt“ stellen wir erst nach Ihrer Bestellung her; die angegebene Lieferzeit enthält die Fertigung. Bei größeren Mengen verlängert sich die Lieferzeit wie auf der Produktseite angegeben; die für Ihre Bestellung geltende Lieferzeit wird im Warenkorb, in der Bestellübersicht und in der Bestellbestätigung genannt.
+
+Ist ein Artikel ausnahmsweise nicht lieferbar, informieren wir Sie unverzüglich und erstatten bereits geleistete Zahlungen umgehend.
 
 ## § 8 Eigentumsvorbehalt
 

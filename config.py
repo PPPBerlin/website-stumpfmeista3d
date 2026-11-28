@@ -44,6 +44,8 @@ class Config:
     SHOP_FREE_SHIPPING_FROM_CENTS = int(os.environ.get('SHOP_FREE_SHIPPING_FROM_CENTS', 0))
     SHOP_SHIPPING_LABEL = os.environ.get('SHOP_SHIPPING_LABEL', 'Versand innerhalb Deutschlands')
     SHOP_MAX_QTY_PER_ITEM = 10
+    # Höchstmenge pro Position bei Artikeln, die auf Bestellung gefertigt werden
+    SHOP_MAX_QTY_MADE_TO_ORDER = 50
     # Wie lange der Bestand während des Bezahlvorgangs reserviert bleibt (Stripe: min. 30 Min.)
     SHOP_CHECKOUT_MINUTES = 30
     PRODUCT_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}

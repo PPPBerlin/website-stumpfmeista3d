@@ -45,7 +45,11 @@
         <td class="px-6 py-3 text-gray-200 font-medium">{{ p.name }}<br><span class="text-xs text-gray-600">/shop/{{ p.slug }}</span></td>
         <td class="px-6 py-3 text-gray-300 whitespace-nowrap">{% if p.has_price_range %}ab {% endif %}{{ p.min_price_cents | euro }}</td>
         <td class="px-6 py-3 text-gray-400">{{ p.active_variants | length }}</td>
+        {% if p.made_to_order %}
+        <td class="px-6 py-3 text-xs text-[#8B2FC9] whitespace-nowrap">auf Bestellung</td>
+        {% else %}
         <td class="px-6 py-3 {% if p.total_stock == 0 %}text-red-400{% elif p.total_stock <= 3 %}text-yellow-400{% else %}text-gray-300{% endif %}">{{ p.total_stock }}</td>
+        {% endif %}
         <td class="px-6 py-3 whitespace-nowrap text-xs">
           {% if p.show_in_main %}<span class="px-2 py-0.5 rounded bg-[#39FF14]/10 text-[#39FF14]">S3D</span>{% endif %}
           {% if p.show_in_boutique %}<span class="px-2 py-0.5 rounded bg-[#F4C6C0]/15 text-[#F4C6C0]">Boutique</span>{% endif %}

@@ -1,0 +1,71 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Rabattcodes{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Rabattcodes</h1>
+    <p class="text-gray-600 text-sm mt-1">Kunden geben den Code im Warenkorb ein. Gezählt werden bezahlte Bestellungen und laufende Bezahlvorgänge.</p>
+  </div>
+  <a href="{{ url_for('admin.discount_new') }}"
+     class="px-5 py-2.5 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg hover:bg-[#39FF14]/90 transition-all shadow-[0_0_12px_#39FF1440]">
+    + Neuer Code
+  </a>
+</div>
+
+<div class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl overflow-x-auto">
+  {% if codes %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-xs text-gray-600 border-b border-[#8B2FC9]/15 bg-[#130820]">
+        <th class="px-6 py-4 font-normal">Code</th>
+        <th class="px-6 py-4 font-normal">Rabatt</th>
+        <th class="px-6 py-4 font-normal">Zeitraum</th>
+        <th class="px-6 py-4 font-normal">Eingelöst</th>
+        <th class="px-6 py-4 font-normal">Shop</th>
+        <th class="px-6 py-4 font-normal">Status</th>
+        <th class="px-6 py-4 font-normal"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#8B2FC9]/10">
+      {% for dc in codes %}
+      {% set expired = dc.valid_until and dc.valid_until < today %}
+      {% set upcoming = dc.valid_from and dc.valid_from > today %}
+      {% set used_up = dc.max_uses and dc.uses >= dc.max_uses %}
+      <tr>
+        <td class="px-6 py-3">
+          <span class="font-mono text-gray-100">{{ dc.code }}</span>
+          {% if dc.note %}<br><span class="text-xs text-gray-600">{{ dc.note }}</span>{% endif %}
+        </td>
+        <td class="px-6 py-3 text-gray-300 whitespace-nowrap">{{ dc.label }}{% if dc.min_order_cents %}<br><span class="text-xs text-gray-600">ab {{ dc.min_order_cents | euro }}</span>{% endif %}</td>
+        <td class="px-6 py-3 text-gray-400 text-xs whitespace-nowrap">
+          {% if not dc.valid_from and not dc.valid_until %}unbegrenzt
+          {% else %}{{ dc.valid_from.strftime('%d.%m.%Y') if dc.valid_from else '…' }} – {{ dc.valid_until.strftime('%d.%m.%Y') if dc.valid_until else '…' }}{% endif %}
+        </td>
+        <td class="px-6 py-3 text-gray-300">{{ dc.uses }}{% if dc.max_uses %} / {{ dc.max_uses }}{% endif %}</td>
+        <td class="px-6 py-3 text-xs whitespace-nowrap">
+          {% if dc.storefront in ('all', 'main') %}<span class="px-2 py-0.5 rounded bg-[#39FF14]/10 text-[#39FF14]">S3D</span>{% endif %}
+          {% if dc.storefront in ('all', 'boutique') %}<span class="px-2 py-0.5 rounded bg-[#F4C6C0]/15 text-[#F4C6C0]">Boutique</span>{% endif %}
+        </td>
+        <td class="px-6 py-3 whitespace-nowrap">
+          {% if not dc.is_active %}<span class="px-2.5 py-1 rounded-full text-xs bg-gray-800 text-gray-500">Inaktiv</span>
+          {% elif expired %}<span class="px-2.5 py-1 rounded-full text-xs bg-gray-800 text-gray-500">Abgelaufen</span>
+          {% elif used_up %}<span class="px-2.5 py-1 rounded-full text-xs bg-gray-800 text-gray-500">Aufgebraucht</span>
+          {% elif upcoming %}<span class="px-2.5 py-1 rounded-full text-xs bg-yellow-900/30 text-yellow-400">Geplant</span>
+          {% else %}<span class="px-2.5 py-1 rounded-full text-xs bg-[#39FF14]/15 text-[#39FF14]">Aktiv</span>{% endif %}
+        </td>
+        <td class="px-6 py-3 whitespace-nowrap">
+          <a href="{{ url_for('admin.discount_edit', code_id=dc.id) }}" class="text-xs text-[#8B2FC9] hover:text-[#39FF14]">Bearbeiten →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="text-center py-16 text-gray-600">
+    <p class="text-4xl mb-3">✂</p>
+    <p>Noch keine Rabattcodes.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

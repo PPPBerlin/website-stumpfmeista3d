@@ -1,5 +1,7 @@
 {% for item in order.items %}{{ item.quantity }} x {{ item.display_name }}  —  {{ item.line_total_cents | euro }}
-{% endfor %}Versand  —  {{ order.shipping_cents | euro }}
+{% if item.delivery_time %}    Lieferzeit: {{ item.delivery_time }}{% if item.made_to_order %} (Fertigung nach Bestellung){% endif %}
+{% endif %}{% endfor %}{% if order.discount_cents %}Rabatt ({{ order.discount_code }})  —  −{{ order.discount_cents | euro }}
+{% endif %}Versand  —  {% if order.shipping_cents %}{{ order.shipping_cents | euro }}{% else %}kostenlos{% endif %}
 ------------------------------
 Gesamt   —  {{ order.total_cents | euro }}
 (Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.)

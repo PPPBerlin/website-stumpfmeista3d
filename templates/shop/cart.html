@@ -19,14 +19,14 @@
       </a>
       <div class="flex-1 min-w-[10rem]">
         <a href="{{ url_for('shop.product', slug=l.product.slug) }}" class="text-white font-medium hover:text-[#39FF14]">{{ l.title }}</a>
-        <p class="text-xs text-gray-500 mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.product.delivery_time }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ l.unit_cents | euro }} / Stück · Lieferzeit {{ l.delivery }}</p>
       </div>
       <form method="POST" action="{{ url_for('shop.cart_update') }}" class="flex items-center gap-2">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="variant_id" value="{{ l.variant.id }}" />
         <label for="qty-{{ l.variant.id }}" class="sr-only">Menge</label>
         <input id="qty-{{ l.variant.id }}" type="number" name="qty" value="{{ l.qty }}" min="0"
-               max="{{ [l.variant.stock, config.SHOP_MAX_QTY_PER_ITEM] | min }}"
+               max="{{ l.variant.qty_input_max }}"
                onchange="this.form.submit()"
                class="w-16 bg-[#1C0D28] border border-[#8B2FC9]/40 rounded-lg px-2 py-2 text-center text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]" />
         <button type="submit" name="action" value="remove" class="text-gray-600 hover:text-red-400 px-2 text-lg" aria-label="Entfernen">×</button>
@@ -51,12 +51,33 @@
     <div class="bg-[#130820] border border-[#8B2FC9]/25 rounded-xl p-6 order-1 md:order-2">
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between"><dt class="text-gray-400">Zwischensumme</dt><dd class="text-white">{{ subtotal | euro }}</dd></div>
+        {% if discount_cents %}
+        <div class="flex justify-between"><dt class="text-gray-400">Rabatt ({{ discount_code.code }})</dt><dd class="text-[#39FF14]">−{{ discount_cents | euro }}</dd></div>
+        {% endif %}
         <div class="flex justify-between"><dt class="text-gray-400">Versand</dt><dd class="text-white">{% if shipping == 0 %}kostenlos{% else %}{{ shipping | euro }}{% endif %}</dd></div>
         <div class="flex justify-between border-t border-[#8B2FC9]/20 pt-3 mt-3 text-lg">
           <dt class="text-white font-bold">Gesamt</dt><dd class="text-[#39FF14] font-bold">{{ total | euro }}</dd>
         </div>
       </dl>
       <p class="text-xs text-gray-600 mt-2">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+
+      <form method="POST" action="{{ url_for('shop.cart_discount') }}" class="mt-5 pt-4 border-t border-[#8B2FC9]/20">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% if discount_code %}
+        <div class="flex items-center justify-between gap-3 text-sm">
+          <p class="text-gray-300">Code <span class="font-mono text-[#39FF14]">{{ discount_code.code }}</span> · {{ discount_code.label }}</p>
+          <button type="submit" name="action" value="remove" class="text-xs text-gray-500 hover:text-red-400">entfernen</button>
+        </div>
+        {% else %}
+        <label for="discount-code" class="block text-xs text-gray-500 mb-1.5">Rabattcode</label>
+        <div class="flex gap-2">
+          <input id="discount-code" type="text" name="code" value="{{ discount_input }}" autocomplete="off" autocapitalize="characters"
+                 class="flex-1 min-w-0 bg-[#1C0D28] border border-[#8B2FC9]/40 rounded-lg px-3 py-2 text-gray-100 text-sm uppercase focus:outline-none focus:border-[#39FF14]" />
+          <button type="submit" class="px-4 py-2 border border-[#8B2FC9]/60 text-gray-300 text-sm rounded-lg hover:border-[#39FF14] hover:text-[#39FF14]">Einlösen</button>
+        </div>
+        {% if discount_input and discount_error %}<p class="text-xs text-yellow-400 mt-1.5">{{ discount_error }}</p>{% endif %}
+        {% endif %}
+      </form>
 
       {% if stripe_ready %}
       <a href="{{ url_for('shop.checkout_review') }}"

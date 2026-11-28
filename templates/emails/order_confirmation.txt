@@ -12,7 +12,7 @@ DEINE BESTELLUNG
 LIEFERADRESSE
 {% include 'emails/_address.txt' %}
 
-Lieferzeit: wie auf der Produktseite angegeben, ab dem Tag nach Zahlungseingang.
+Die Lieferzeit (siehe je Artikel oben) beginnt am Tag nach Zahlungseingang.
 Sobald dein Paket unterwegs ist, bekommst du eine E-Mail mit Sendungsnummer.
 
 Fragen? Antworte einfach auf diese E-Mail.

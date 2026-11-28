@@ -38,11 +38,16 @@
         {% for i in order.items %}
         <tr class="border-b border-[#8B2FC9]/10">
           <td class="py-2 text-gray-300">{{ i.quantity }}×</td>
-          <td class="py-2 text-gray-200">{{ i.display_name }}</td>
+          <td class="py-2 text-gray-200">{{ i.display_name }}
+            {% if i.made_to_order %}<span class="ml-1 px-2 py-0.5 rounded text-[10px] bg-[#8B2FC9]/25 text-[#c79bf0]">fertigen</span>{% endif %}
+            {% if i.delivery_time %}<br><span class="text-xs text-gray-600">Lieferzeit {{ i.delivery_time }}</span>{% endif %}</td>
           <td class="py-2 text-gray-500 text-right">{{ i.unit_price_cents | euro }}</td>
           <td class="py-2 text-white text-right">{{ i.line_total_cents | euro }}</td>
         </tr>
         {% endfor %}
+        {% if order.discount_cents or order.discount_code %}
+        <tr><td></td><td class="pt-3 text-gray-400">Rabatt {% if order.discount %}<a href="{{ url_for('admin.discount_edit', code_id=order.discount_code_id) }}" class="font-mono text-[#8B2FC9] hover:text-[#39FF14]">{{ order.discount_code }}</a>{% else %}<span class="font-mono">{{ order.discount_code }}</span>{% endif %}</td><td></td><td class="pt-3 text-right text-[#39FF14]">−{{ order.discount_cents | euro }}</td></tr>
+        {% endif %}
         <tr><td></td><td class="pt-3 text-gray-400">Versand</td><td></td><td class="pt-3 text-right text-gray-300">{{ order.shipping_cents | euro }}</td></tr>
         <tr><td></td><td class="pt-2 text-white font-bold">Gesamt</td><td></td><td class="pt-2 text-right text-[#39FF14] font-bold">{{ order.total_cents | euro }}</td></tr>
       </table>

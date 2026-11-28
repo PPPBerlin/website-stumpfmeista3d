@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import stripe  # noqa: E402
 from app import create_app  # noqa: E402
 from extensions import db  # noqa: E402
-from models import (AdminUser, Order, Product, ProductVariant, Withdrawal)  # noqa: E402
+from models import (AdminUser, DiscountCode, Order, Product, ProductVariant, Withdrawal)  # noqa: E402
 import blueprints.shop.services as svc  # noqa: E402
 import blueprints.legal.routes as legal_routes  # noqa: E402
 
@@ -125,7 +125,8 @@ def main():
     assert '12,90 €' in html and 'Neongrün' in html and 'AggregateOffer' in html
     assert 'Versandkosten' in html and '§ 19 UStG' in html
     assert 'Wolfsgartenstraße 6' in html and 'data-sku="KH-SW"' in html and 'Kein Spielzeug.' in html
-    print('OK Produktseite: Preisangabe, JSON-LD, GPSR')
+    assert 'data-stock' not in html and 'Nur noch' not in html and 'max="10"' in html
+    print('OK Produktseite: Preisangabe, JSON-LD, GPSR, kein Bestand sichtbar')
 
     # --- Warenkorb + Bestellübersicht ---------------------------------------
     ok(c.post('/warenkorb/hinzufuegen', data={'variant_id': 1, 'qty': 5}), 302)
@@ -237,8 +238,6 @@ def main():
     print('OK Versandmail mit Tracking, Storno mit Rückbuchung, Löschen → deaktivieren')
     boutique(c)
 
-    print('\nALLE SHOP-TESTS GRÜN')
-
 
 def boutique(admin_client):
     """Zweites Schaufenster: eigene Produktauswahl, eigener Warenkorb, eigenes Branding."""
@@ -320,6 +319,153 @@ def boutique(admin_client):
     print('OK eigene Domain: Routing, Links, 301 von /boutique, Stripe-URLs')
 
 
+def discounts_and_made_to_order():
+    """Fertigung auf Bestellung (kein Bestand, Lieferzeit-Zuschlag) + Rabattcodes."""
+    from datetime import date, timedelta
+    a = app.test_client()
+    ok(a.post('/admin/login', data={'username': 'a', 'password': 'p'}), 302)
+    ok(a.post('/admin/produkte/neu', data={
+        'name': 'Anhänger Druck', 'price': '3,00', 'is_active': '1', 'show_in_main': '1',
+        'show_in_boutique': '1', 'delivery_time': '4–6 Werktage',
+        'made_to_order': '1', 'extra_day_per_units': '10',
+        'variants-0-name': 'Rot', 'variants-0-stock': '0', 'variants-0-active': '1',
+        'variants-1-name': 'Blau', 'variants-1-stock': '0', 'variants-1-active': '1'}), 302)
+    assert 'ganze Zahl ab 1' in ok(a.post('/admin/produkte/neu', data={
+        'name': 'Y', 'price': '1', 'made_to_order': '1', 'extra_day_per_units': '0',
+        'variants-0-name': 'S'}, follow_redirects=True))
+    with app.app_context():
+        mp = Product.query.filter_by(slug='anhaenger-druck').one()
+        rot, blau = [v.id for v in mp.variants]
+        assert mp.made_to_order and mp.extra_day_per_units == 10 and not mp.is_sold_out
+    assert 'auf Bestellung' in ok(a.get('/admin/produkte'))
+
+    # --- Rabattcodes anlegen ---
+    yesterday = (date.today() - timedelta(days=2)).isoformat()
+    for data in (
+        {'code': 'stamm20', 'note': 'Stammkundin', 'kind': 'percent', 'value': '20',
+         'storefront': 'all', 'is_active': '1', 'max_uses': '1'},
+        {'code': 'ALT10', 'kind': 'percent', 'value': '10', 'storefront': 'all',
+         'is_active': '1', 'valid_until': yesterday},
+        {'code': 'NURBOUTIQUE', 'kind': 'fixed', 'value': '5,00', 'storefront': 'boutique',
+         'is_active': '1'},
+        {'code': 'VERSANDFREI', 'kind': 'fixed', 'value': '', 'free_shipping': '1',
+         'storefront': 'all', 'is_active': '1', 'min_order': '30,00'},
+    ):
+        ok(a.post('/admin/rabattcodes/neu', data=data), 302)
+    assert 'gibt es schon' in ok(a.post('/admin/rabattcodes/neu', data={
+        'code': 'Stamm20', 'kind': 'percent', 'value': '5'}, follow_redirects=True))
+    assert 'von 0 bis 100' in ok(a.post('/admin/rabattcodes/neu', data={
+        'code': 'ZUVIEL', 'kind': 'percent', 'value': '150'}, follow_redirects=True))
+    html = ok(a.get('/admin/rabattcodes'))
+    assert 'STAMM20' in html and 'Abgelaufen' in html and 'versandkostenfrei' in html
+    with app.app_context():
+        stamm_id = DiscountCode.query.filter_by(code='STAMM20').one().id
+    ok(a.get('/admin/rabattcodes/neu'))
+    ok(a.get(f'/admin/rabattcodes/{stamm_id}/bearbeiten'))
+    a.get('/admin/logout')
+    print('OK Admin: Fertigungsartikel + Rabattcodes anlegen/validieren')
+
+    # --- Kunde: Fertigungsartikel ---
+    c = app.test_client()
+    html = ok(c.get('/shop/anhaenger-druck'))
+    assert 'für dich gefertigt' in html and 'MadeToOrder' in html and 'Ab 10 Stück' in html
+    assert 'max="50"' in html and 'Leider ausverkauft' not in html
+    ok(c.post('/warenkorb/hinzufuegen', data={'variant_id': rot, 'qty': 7}), 302)
+    ok(c.post('/warenkorb/hinzufuegen', data={'variant_id': blau, 'qty': 5}), 302)
+    html = ok(c.get('/warenkorb'))
+    assert '36,00 €' in html and '4–6 Werktage + 1 Werktag Fertigung' in html, html[:200]
+    print('OK Fertigung auf Bestellung: ohne Bestand bestellbar, +1 Werktag ab 10 Stück')
+
+    # --- Rabattcodes einlösen ---
+    def apply(client, code, prefix=''):
+        return ok(client.post(f'{prefix}/warenkorb/rabattcode', data={'code': code},
+                              follow_redirects=True))
+    assert 'nicht gültig' in apply(c, 'GIBTSNICHT')
+    assert 'abgelaufen' in apply(c, 'alt10')
+    assert 'nicht gültig' in apply(c, 'NURBOUTIQUE')
+    html = apply(c, ' stamm20 ')
+    assert 'STAMM20 eingelöst' in html and '−7,20 €' in html and '33,75 €' in html, \
+        re.findall(r'[−\d.,]+ €', html)
+    html = ok(c.get('/kasse'))
+    assert '−7,20 €' in html and 'value="3375"' in html
+
+    # Preis ändert sich zwischen Übersicht und Klick → zurück zur Übersicht
+    r = c.post('/kasse', data={'expected_total': '9999'})
+    assert r.status_code == 302 and r.headers['Location'].endswith('/kasse')
+
+    created, coupons = {}, []
+    with mock.patch('stripe.Coupon.create',
+                    side_effect=lambda **kw: coupons.append(kw) or NS(id='co_1')), \
+         mock.patch('stripe.checkout.Session.create',
+                    side_effect=lambda **kw: created.update(kw) or NS(id='cs_d_1', url='https://x')):
+        ok(c.post('/kasse', data={'expected_total': '3375'}), 303)
+    assert coupons[0]['amount_off'] == 720 and coupons[0]['max_redemptions'] == 1
+    assert created['discounts'] == [{'coupon': 'co_1'}]
+    with app.app_context():
+        o = Order.query.filter_by(stripe_session_id='cs_d_1').one()
+        assert (o.subtotal_cents, o.discount_cents, o.shipping_cents, o.total_cents) == \
+            (3600, 720, 495, 3375)
+        assert o.discount_code == 'STAMM20' and all(i.made_to_order for i in o.items)
+        assert o.items[0].delivery_time == '4–6 Werktage + 1 Werktag Fertigung'
+        assert [v.stock for v in Product.query.filter_by(slug='anhaenger-druck').one().variants] == [0, 0]
+    n = len(sent)
+    paid = paid_session('cs_d_1')
+    paid['amount_total'] = 3375
+    webhook(c, 'checkout.session.completed', 'cs_d_1', paid)
+    conf = sent[n].body
+    assert 'Rabatt (STAMM20)  —  −7,20 €' in conf and '33,75 €' in conf
+    assert 'Lieferzeit: 4–6 Werktage + 1 Werktag Fertigung (Fertigung nach Bestellung)' in conf
+    with app.app_context():
+        o = Order.query.filter_by(stripe_session_id='cs_d_1').one()
+        assert o.status == 'Bezahlt' and not o.notes
+        oid = o.id
+    print('OK Rabattcode: Prüfung, Anzeige, Stripe-Gutschein, Preisschutz, Bestätigungsmail')
+
+    # max_uses=1 → zweiter Kunde bekommt ihn nicht mehr
+    c2 = app.test_client()
+    ok(c2.post('/warenkorb/hinzufuegen', data={'variant_id': rot, 'qty': 1}), 302)
+    assert 'bereits eingelöst' in apply(c2, 'STAMM20')
+    # Mindestbestellwert + versandkostenfrei
+    assert 'ab einem Bestellwert von 30,00 €' in apply(c2, 'VERSANDFREI')
+    ok(c2.post('/warenkorb/hinzufuegen', data={'variant_id': rot, 'qty': 9}), 302)
+    html = ok(c2.get('/warenkorb'))
+    created = {}
+    assert 'VERSANDFREI' in html and 'kostenlos' in html and '30,00 €' in html
+    with mock.patch('stripe.checkout.Session.create',
+                    side_effect=lambda **kw: created.update(kw) or NS(id='cs_d_2', url='https://x')):
+        ok(c2.post('/kasse'), 303)
+    assert 'discounts' not in created
+    rate = created['shipping_options'][0]['shipping_rate_data']
+    assert rate['fixed_amount']['amount'] == 0 and 'VERSANDFREI' in rate['display_name']
+    # Boutique-Code in der Boutique
+    b = app.test_client()
+    ok(b.post('/boutique/warenkorb/hinzufuegen', data={'variant_id': rot, 'qty': 2}), 302)
+    html = apply(b, 'nurboutique', '/boutique')
+    assert 'NURBOUTIQUE eingelöst' in html and '−5,00 €' in html and '5,95 €' in html
+    # Stripe-Mindestbetrag 0,50 €: Rabatt größer als Warenwert wird gedeckelt
+    with app.app_context():
+        db.session.add(DiscountCode(code='ALLES', kind='percent', value=100, free_shipping=True))
+        db.session.commit()
+    html = apply(b, 'ALLES', '/boutique')
+    assert '−5,50 €' in html and '0,50 €' in html
+    print('OK Rabattcode: Einlöselimit, Mindestbestellwert, versandkostenfrei, Shop-Bindung')
+
+    # Admin: Bestellung zeigt Rabatt + Fertigung; benutzter Code wird nur deaktiviert
+    ok(a.post('/admin/login', data={'username': 'a', 'password': 'p'}), 302)
+    html = ok(a.get(f'/admin/bestellungen/{oid}'))
+    assert 'STAMM20' in html and 'fertigen' in html and '−7,20 €' in html
+    assert 'Eingelöst in 1 Bestellung' in ok(a.get(f'/admin/rabattcodes/{stamm_id}/bearbeiten'))
+    assert 'nicht mehr umbenannt' in ok(a.post(f'/admin/rabattcodes/{stamm_id}/bearbeiten', data={
+        'code': 'NEU', 'kind': 'percent', 'value': '20'}, follow_redirects=True))
+    ok(a.post(f'/admin/bestellungen/{oid}/stornieren', data={'restock': '1'}), 302)
+    with app.app_context():
+        assert [v.stock for v in Product.query.filter_by(slug='anhaenger-druck').one().variants] == [0, 0]
+    ok(a.post(f'/admin/rabattcodes/{stamm_id}/loeschen'), 302)
+    with app.app_context():
+        assert DiscountCode.query.get(stamm_id).is_active is False
+    print('OK Admin: Rabatt + Fertigung in Bestellung, Storno ohne Bestandsbuchung')
+
+
 def disabled_mode():
     """SHOP_ENABLED=false: Shop 404, Rechtstexte erreichbar."""
     app.config['SHOP_ENABLED'] = False
@@ -337,4 +483,6 @@ def disabled_mode():
 
 if __name__ == '__main__':
     main()
+    discounts_and_made_to_order()
     disabled_mode()
+    print('\nALLE SHOP-TESTS GRÜN')

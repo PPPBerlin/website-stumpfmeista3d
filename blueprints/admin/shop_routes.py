@@ -1,8 +1,8 @@
-"""Admin: Produkte, Bestellungen, Widerrufe."""
+"""Admin: Produkte, Bestellungen, Rabattcodes, Widerrufe."""
 import os
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
 
 from flask import render_template, request, redirect, url_for, flash, current_app
@@ -11,7 +11,7 @@ from sqlalchemy import update
 
 from extensions import db
 from models import (Product, ProductVariant, ProductImage, Order, OrderItem,
-                    Withdrawal, ORDER_STATUSES)
+                    Withdrawal, DiscountCode, DISCOUNT_KINDS, ORDER_STATUSES)
 from blueprints.shop import services as svc
 from .routes import admin_bp
 
@@ -145,6 +145,15 @@ def _save_product_form(product):
     if product.is_active and not (product.show_in_main or product.show_in_boutique):
         errors.append('Aktives Produkt: bitte mindestens einen Shop auswählen.')
     product.sort_order = f.get('sort_order', 0, type=int) or 0
+    product.made_to_order = f.get('made_to_order') == '1'
+    extra = f.get('extra_day_per_units', '').strip()
+    if product.made_to_order and extra:
+        if not extra.isdigit() or int(extra) < 1:
+            errors.append('„+1 Werktag je … Stück“ muss eine ganze Zahl ab 1 sein.')
+        else:
+            product.extra_day_per_units = int(extra)
+    else:
+        product.extra_day_per_units = None
     try:
         price = parse_euro(f.get('price'))
         if price is None:
@@ -319,7 +328,7 @@ def order_cancel(order_id):
         return redirect(url_for('admin.order_detail', order_id=order.id))
     if request.form.get('restock') == '1':
         for item in order.items:
-            if item.variant_id:
+            if item.variant_id and not item.made_to_order:
                 db.session.execute(update(ProductVariant)
                                    .where(ProductVariant.id == item.variant_id)
                                    .values(stock=ProductVariant.stock + item.quantity))
@@ -337,6 +346,131 @@ def order_notes(order_id):
     db.session.commit()
     flash('Notiz gespeichert.', 'success')
     return redirect(url_for('admin.order_detail', order_id=order.id))
+
+
+# ---------------------------------------------------------------------------
+# Rabattcodes
+# ---------------------------------------------------------------------------
+@admin_bp.route('/rabattcodes')
+@login_required
+def discounts():
+    codes = DiscountCode.query.order_by(DiscountCode.is_active.desc(),
+                                        DiscountCode.created_at.desc()).all()
+    return render_template('admin/discounts.html', codes=codes, today=svc.berlin_today())
+
+
+@admin_bp.route('/rabattcodes/neu', methods=['GET', 'POST'])
+@login_required
+def discount_new():
+    dc = DiscountCode()
+    if request.method == 'POST':
+        if _save_discount_form(dc, new=True):
+            flash(f'Rabattcode {dc.code} angelegt.', 'success')
+            return redirect(url_for('admin.discounts'))
+        db.session.rollback()
+    return render_template('admin/discount_form.html', dc=None, form=request.form,
+                           kinds=DISCOUNT_KINDS, cents_to_input=cents_to_input)
+
+
+@admin_bp.route('/rabattcodes/<int:code_id>/bearbeiten', methods=['GET', 'POST'])
+@login_required
+def discount_edit(code_id):
+    dc = DiscountCode.query.get_or_404(code_id)
+    if request.method == 'POST':
+        if _save_discount_form(dc):
+            flash('Rabattcode gespeichert.', 'success')
+            return redirect(url_for('admin.discounts'))
+        db.session.rollback()
+        dc = DiscountCode.query.get_or_404(code_id)
+        return render_template('admin/discount_form.html', dc=dc, form=request.form,
+                               kinds=DISCOUNT_KINDS, cents_to_input=cents_to_input)
+    orders = dc.orders.filter(Order.status.in_(('Bezahlt', 'Versendet', 'Storniert'))) \
+        .order_by(Order.created_at.desc()).all()
+    return render_template('admin/discount_form.html', dc=dc, form={}, orders=orders,
+                           kinds=DISCOUNT_KINDS, cents_to_input=cents_to_input)
+
+
+def _parse_date(value, label, errors):
+    value = (value or '').strip()
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        errors.append(f'{label}: ungültiges Datum.')
+        return None
+
+
+def _save_discount_form(dc, new=False):
+    f = request.form
+    errors = []
+    code = svc.normalize_code(f.get('code'))
+    if not re.fullmatch(r'[A-Z0-9_-]{3,40}', code or ''):
+        errors.append('Code: 3–40 Zeichen, nur Buchstaben (ohne Umlaute), Ziffern, - und _.')
+    else:
+        with db.session.no_autoflush:
+            other = DiscountCode.query.filter_by(code=code).first()
+        if other and other.id != dc.id:
+            errors.append(f'Den Code {code} gibt es schon.')
+    if not new and dc.code != code and dc.orders.count():
+        errors.append('Der Code wurde schon benutzt und kann nicht mehr umbenannt werden '
+                      '— leg stattdessen einen neuen an.')
+    dc.code = code
+    dc.note = f.get('note', '').strip() or None
+    dc.kind = f.get('kind') if f.get('kind') in DISCOUNT_KINDS else 'percent'
+    dc.free_shipping = f.get('free_shipping') == '1'
+    raw = f.get('value', '').strip()
+    try:
+        if dc.kind == 'percent':
+            dc.value = int(raw.replace('%', '').strip() or 0)
+            if not 0 <= dc.value <= 100:
+                raise ValueError
+        else:
+            dc.value = parse_euro(raw) or 0
+    except ValueError:
+        errors.append('Rabatt: bei Prozent eine ganze Zahl von 0 bis 100, '
+                      'sonst ein Eurobetrag wie 5,00.')
+    if not dc.value and not dc.free_shipping:
+        errors.append('Bitte einen Rabatt angeben oder „versandkostenfrei“ wählen.')
+    try:
+        dc.min_order_cents = parse_euro(f.get('min_order')) or 0
+    except ValueError as e:
+        errors.append(f'Mindestbestellwert: {e}')
+    dc.valid_from = _parse_date(f.get('valid_from'), 'Gültig ab', errors)
+    dc.valid_until = _parse_date(f.get('valid_until'), 'Gültig bis', errors)
+    if dc.valid_from and dc.valid_until and dc.valid_until < dc.valid_from:
+        errors.append('„Gültig bis“ liegt vor „Gültig ab“.')
+    max_uses = f.get('max_uses', '').strip()
+    if max_uses and (not max_uses.isdigit() or int(max_uses) < 1):
+        errors.append('Max. Einlösungen: ganze Zahl ab 1 oder leer für unbegrenzt.')
+    dc.max_uses = int(max_uses) if max_uses.isdigit() and int(max_uses) >= 1 else None
+    dc.storefront = f.get('storefront') if f.get('storefront') in ('all', 'main', 'boutique') else 'all'
+    dc.is_active = f.get('is_active') == '1'
+
+    if errors:
+        for e in errors:
+            flash(e, 'error')
+        return False
+    if new:
+        db.session.add(dc)
+    db.session.commit()
+    return True
+
+
+@admin_bp.route('/rabattcodes/<int:code_id>/loeschen', methods=['POST'])
+@login_required
+def discount_delete(code_id):
+    dc = DiscountCode.query.get_or_404(code_id)
+    if dc.orders.count():
+        dc.is_active = False
+        db.session.commit()
+        flash(f'{dc.code} wurde schon benutzt und ist jetzt deaktiviert '
+              '(bleibt für die Bestellhistorie erhalten).', 'info')
+    else:
+        db.session.delete(dc)
+        db.session.commit()
+        flash(f'Rabattcode {dc.code} gelöscht.', 'success')
+    return redirect(url_for('admin.discounts'))
 
 
 @admin_bp.route('/widerrufe/<int:withdrawal_id>/erledigt', methods=['POST'])

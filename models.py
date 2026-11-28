@@ -167,6 +167,10 @@ class Product(db.Model):
     # Bezeichnung der Variantenauswahl, z.B. "Farbe" oder "Größe"
     variant_label = db.Column(db.String(50), nullable=False, default='Ausführung')
     delivery_time = db.Column(db.String(100), nullable=False, default='3–5 Werktage')
+    # Auf Bestellung gefertigt: kein Bestand, nie ausverkauft
+    made_to_order = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
+    # Nur bei made_to_order: je angefangene N Stück (gesamt pro Produkt) +1 Werktag
+    extra_day_per_units = db.Column(db.Integer, nullable=True)
     # GPSR: Material + Warn-/Sicherheitshinweise (werden auf der Produktseite angezeigt)
     material = db.Column(db.String(200), nullable=True)
     safety_info = db.Column(db.Text, nullable=True)
@@ -215,7 +219,19 @@ class Product(db.Model):
 
     @property
     def is_sold_out(self):
-        return self.total_stock <= 0
+        return not any(v.available for v in self.active_variants)
+
+    def extra_days_for(self, qty):
+        """Zusätzliche Werktage Fertigung bei qty Stück (ab N Stück +1, ab 2N +2 …)."""
+        if not self.made_to_order or not self.extra_day_per_units or qty <= 0:
+            return 0
+        return qty // self.extra_day_per_units
+
+    def delivery_text(self, qty=1):
+        extra = self.extra_days_for(qty)
+        if not extra:
+            return self.delivery_time
+        return f'{self.delivery_time} + {extra} Werktag{"e" if extra > 1 else ""} Fertigung'
 
     def __repr__(self):
         return f'<Product {self.slug}>'
@@ -237,6 +253,27 @@ class ProductVariant(db.Model):
     @property
     def effective_price_cents(self):
         return self.price_cents if self.price_cents is not None else self.product.price_cents
+
+    @property
+    def available(self):
+        return self.product.made_to_order or self.stock > 0
+
+    @property
+    def max_qty(self):
+        """Höchstmenge im Warenkorb (Bestand wird Kunden nicht angezeigt)."""
+        from flask import current_app
+        cfg = current_app.config
+        if self.product.made_to_order:
+            return cfg['SHOP_MAX_QTY_MADE_TO_ORDER']
+        return min(self.stock, cfg['SHOP_MAX_QTY_PER_ITEM'])
+
+    @property
+    def qty_input_max(self):
+        """max-Attribut fürs Mengenfeld: Obergrenze ohne Bestandsverrat."""
+        from flask import current_app
+        cfg = current_app.config
+        return cfg['SHOP_MAX_QTY_MADE_TO_ORDER'] if self.product.made_to_order \
+            else cfg['SHOP_MAX_QTY_PER_ITEM']
 
     def __repr__(self):
         return f'<ProductVariant {self.product_id}:{self.name}>'
@@ -287,6 +324,10 @@ class Order(db.Model):
     country = db.Column(db.String(2), nullable=True)
 
     subtotal_cents = db.Column(db.Integer, nullable=False, default=0)
+    # Rabattcode (Kopie des Codes, falls er später gelöscht wird)
+    discount_code_id = db.Column(db.Integer, db.ForeignKey('discount_codes.id'), nullable=True)
+    discount_code = db.Column(db.String(40), nullable=True)
+    discount_cents = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     shipping_cents = db.Column(db.Integer, nullable=False, default=0)
     total_cents = db.Column(db.Integer, nullable=False, default=0)
 
@@ -321,6 +362,10 @@ class OrderItem(db.Model):
     variant_name = db.Column(db.String(100), nullable=True)
     unit_price_cents = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+    # Wird nach Bestellung gefertigt → kein Bestand reserviert/zurückgebucht
+    made_to_order = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
+    # Lieferzeit zum Kaufzeitpunkt (inkl. Fertigungszuschlag)
+    delivery_time = db.Column(db.String(150), nullable=True)
 
     variant = db.relationship('ProductVariant')
 
@@ -333,6 +378,56 @@ class OrderItem(db.Model):
         if self.variant_name and self.variant_name != 'Standard':
             return f'{self.product_name} – {self.variant_name}'
         return self.product_name
+
+
+# ---------------------------------------------------------------------------
+# Rabattcodes
+# ---------------------------------------------------------------------------
+DISCOUNT_KINDS = {'percent': 'Prozent', 'fixed': 'Fester Betrag'}
+
+
+class DiscountCode(db.Model):
+    __tablename__ = 'discount_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(40), unique=True, nullable=False)   # immer GROSS
+    note = db.Column(db.String(200), nullable=True)                 # intern, z. B. „Stammkundin“
+    kind = db.Column(db.String(10), nullable=False, default='percent')
+    # percent: 1–100 (Prozent) · fixed: Cent
+    value = db.Column(db.Integer, nullable=False, default=0)
+    free_shipping = db.Column(db.Boolean, nullable=False, default=False)
+    min_order_cents = db.Column(db.Integer, nullable=False, default=0)
+    valid_from = db.Column(db.Date, nullable=True)                  # inklusive, deutsche Zeit
+    valid_until = db.Column(db.Date, nullable=True)                 # inklusive, deutsche Zeit
+    max_uses = db.Column(db.Integer, nullable=True)                 # leer = unbegrenzt
+    storefront = db.Column(db.String(20), nullable=False, default='all')  # all/main/boutique
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    orders = db.relationship('Order', backref='discount', lazy='dynamic')
+
+    @property
+    def uses(self):
+        """Einlösungen: bezahlte/versendete + gerade laufende Checkouts."""
+        return self.orders.filter(Order.status.in_(('Offen', 'Bezahlt', 'Versendet'))).count()
+
+    def amount_for(self, subtotal_cents):
+        if self.kind == 'percent':
+            return min(subtotal_cents, round(subtotal_cents * self.value / 100))
+        return min(subtotal_cents, self.value)
+
+    @property
+    def label(self):
+        parts = []
+        if self.value:
+            parts.append(f'{self.value} %' if self.kind == 'percent'
+                         else f'{self.value / 100:.2f} €'.replace('.', ','))
+        if self.free_shipping:
+            parts.append('versandkostenfrei')
+        return ' + '.join(parts) or '–'
+
+    def __repr__(self):
+        return f'<DiscountCode {self.code}>'
 
 
 # ---------------------------------------------------------------------------

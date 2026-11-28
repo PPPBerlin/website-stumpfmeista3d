@@ -1,0 +1,151 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ dc.code if dc else 'Neuer Rabattcode' }}{% endblock %}
+
+{% set input_cls = "w-full bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-4 py-3 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14] focus:shadow-[0_0_8px_#39FF1440] transition-all placeholder-gray-700" %}
+{% set label_cls = "block text-xs text-gray-500 uppercase tracking-wider mb-1.5" %}
+{% macro val(field, default='') -%}
+  {{ form.get(field) if form.get(field) is not none else ((dc|attr(field)) if dc and (dc|attr(field)) is not none else default) }}
+{%- endmacro %}
+{% set kind = form.get('kind') or (dc.kind if dc else 'percent') %}
+{% set store = form.get('storefront') or (dc.storefront if dc else 'all') %}
+{% if form.get('value') is not none %}{% set value_in = form.get('value') %}
+{% elif dc %}{% set value_in = (dc.value if dc.kind == 'percent' else cents_to_input(dc.value)) %}
+{% else %}{% set value_in = '' %}{% endif %}
+
+{% block content %}
+<div class="mb-6"><a href="{{ url_for('admin.discounts') }}" class="text-xs text-gray-600 hover:text-gray-400">← Rabattcodes</a></div>
+<h1 class="text-2xl font-bold text-white mb-8">{{ dc.code if dc else 'Neuen Rabattcode anlegen' }}</h1>
+
+<form method="POST" class="space-y-8 max-w-3xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="{{ label_cls }}" for="code">Code <span class="text-[#39FF14]">*</span></label>
+        <div class="flex gap-2">
+          <input id="code" type="text" name="code" required maxlength="40" value="{{ val('code') }}"
+                 class="{{ input_cls }} font-mono uppercase" placeholder="z. B. SOMMER15" autocomplete="off" />
+          <button type="button" id="gen-code" class="px-3 border border-[#8B2FC9]/40 text-gray-400 text-xs rounded-lg hover:border-[#39FF14] hover:text-[#39FF14]" title="Zufälligen Code erzeugen">Zufall</button>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">Groß-/Kleinschreibung egal. Für persönliche Codes einen schwer zu erratenden wählen.</p>
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="note">Interne Notiz</label>
+        <input id="note" type="text" name="note" maxlength="200" value="{{ val('note') }}" class="{{ input_cls }}" placeholder="z. B. Stammkundin Anna" />
+        <p class="text-xs text-gray-600 mt-1">Sehen nur Admins.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <h2 class="text-sm font-bold text-white">Rabatt</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div>
+        <label class="{{ label_cls }}" for="kind">Art</label>
+        <select id="kind" name="kind" class="{{ input_cls }}">
+          {% for k, label in kinds.items() %}<option value="{{ k }}" {% if kind == k %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="value">Höhe <span id="value-unit" class="normal-case">({{ '%' if kind == 'percent' else '€' }})</span></label>
+        <input id="value" type="text" inputmode="decimal" name="value" value="{{ value_in }}" class="{{ input_cls }}" placeholder="{{ '15' if kind == 'percent' else '5,00' }}" />
+        <p class="text-xs text-gray-600 mt-1">Gilt auf den Warenwert, nicht auf den Versand.</p>
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="min_order">Mindestbestellwert (€)</label>
+        <input id="min_order" type="text" inputmode="decimal" name="min_order"
+               value="{{ form.get('min_order') if form.get('min_order') is not none else (cents_to_input(dc.min_order_cents) if dc and dc.min_order_cents else '') }}"
+               class="{{ input_cls }}" placeholder="leer = keiner" />
+      </div>
+    </div>
+    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer">
+      <input type="checkbox" name="free_shipping" value="1" class="w-4 h-4 accent-[#39FF14]"
+             {% if (dc and dc.free_shipping and form.get('code') is none) or form.get('free_shipping') %}checked{% endif %} />
+      Zusätzlich versandkostenfrei
+    </label>
+  </section>
+
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <h2 class="text-sm font-bold text-white">Gültigkeit</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div>
+        <label class="{{ label_cls }}" for="valid_from">Gültig ab</label>
+        <input id="valid_from" type="date" name="valid_from" value="{{ form.get('valid_from') if form.get('valid_from') is not none else (dc.valid_from.isoformat() if dc and dc.valid_from else '') }}" class="{{ input_cls }}" />
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="valid_until">Gültig bis (einschließlich)</label>
+        <input id="valid_until" type="date" name="valid_until" value="{{ form.get('valid_until') if form.get('valid_until') is not none else (dc.valid_until.isoformat() if dc and dc.valid_until else '') }}" class="{{ input_cls }}" />
+      </div>
+      <div>
+        <label class="{{ label_cls }}" for="max_uses">Max. Einlösungen</label>
+        <input id="max_uses" type="number" min="1" name="max_uses" value="{{ val('max_uses') }}" class="{{ input_cls }}" placeholder="unbegrenzt" />
+      </div>
+    </div>
+    <p class="text-xs text-gray-600">Beide Daten leer = zeitlich unbegrenzt. Es zählt deutsche Zeit (bis 23:59 Uhr am letzten Tag).</p>
+    <div>
+      <p class="{{ label_cls }}">Gilt in</p>
+      <div class="flex flex-wrap gap-3">
+        {% for key, label in [('all', 'beiden Shops'), ('main', 'nur Stumpfmeista3D'), ('boutique', 'nur Boutique')] %}
+        <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#8B2FC9]/40 text-sm text-gray-300 cursor-pointer has-[:checked]:border-[#39FF14] has-[:checked]:text-[#39FF14]">
+          <input type="radio" name="storefront" value="{{ key }}" class="accent-[#39FF14]" {% if store == key %}checked{% endif %} /> {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer">
+      <input type="checkbox" name="is_active" value="1" class="w-4 h-4 accent-[#39FF14]"
+             {% if (not dc and form.get('code') is none) or (dc and dc.is_active and form.get('code') is none) or form.get('is_active') %}checked{% endif %} />
+      Aktiv
+    </label>
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <button type="submit" class="px-8 py-3 bg-[#39FF14] text-[#130820] font-bold text-sm rounded-lg hover:bg-[#39FF14]/90 shadow-[0_0_12px_#39FF1440]">
+      {{ 'Speichern' if dc else 'Anlegen' }}
+    </button>
+    <a href="{{ url_for('admin.discounts') }}" class="px-8 py-3 border border-[#8B2FC9]/40 text-gray-400 text-sm rounded-lg hover:border-[#8B2FC9]">Abbrechen</a>
+  </div>
+</form>
+
+{% if dc %}
+{% if orders %}
+<section class="mt-10 max-w-3xl bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6">
+  <h2 class="text-sm font-bold text-white mb-4">Eingelöst in {{ orders | length }} Bestellung{{ 'en' if orders | length != 1 }}</h2>
+  <table class="w-full text-sm">
+    {% for o in orders %}
+    <tr class="border-b border-[#8B2FC9]/10">
+      <td class="py-2"><a href="{{ url_for('admin.order_detail', order_id=o.id) }}" class="text-[#8B2FC9] hover:text-[#39FF14]">{{ o.number }}</a></td>
+      <td class="py-2 text-gray-400">{{ o.name or o.email or '' }}</td>
+      <td class="py-2 text-gray-500 text-xs">{{ o.status }}</td>
+      <td class="py-2 text-right text-[#39FF14]">−{{ o.discount_cents | euro }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+<form method="POST" action="{{ url_for('admin.discount_delete', code_id=dc.id) }}" class="mt-12 max-w-3xl border-t border-red-900/40 pt-6"
+      onsubmit="return this.querySelector('[name=confirm]').checked">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <label class="flex items-center gap-2 text-xs text-gray-500 mb-3"><input type="checkbox" name="confirm" class="accent-red-500" /> Ja, Code wirklich löschen</label>
+  <button type="submit" class="px-4 py-2 border border-red-800 text-red-400 text-xs rounded-lg hover:bg-red-900/30">Code löschen</button>
+  <p class="text-xs text-gray-600 mt-2">Schon benutzte Codes werden nur deaktiviert.</p>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const kind = document.getElementById('kind');
+  kind.addEventListener('change', () => {
+    const pct = kind.value === 'percent';
+    document.getElementById('value-unit').textContent = pct ? '(%)' : '(€)';
+    document.getElementById('value').placeholder = pct ? '15' : '5,00';
+  });
+  document.getElementById('gen-code').addEventListener('click', () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const rnd = crypto.getRandomValues(new Uint32Array(8));
+    document.getElementById('code').value = Array.from(rnd, n => chars[n % chars.length]).join('');
+  });
+</script>
+{% endblock %}

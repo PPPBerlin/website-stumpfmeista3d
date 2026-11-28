@@ -2,6 +2,7 @@
 Shop-Logik: Warenkorb, Bestandsreservierung, Stripe-Abgleich und Mails.
 
 Bestandsmodell:
+  - Artikel „auf Bestellung gefertigt“ haben keinen Bestand und werden nie reserviert.
   - Beim Start des Checkouts wird der Bestand atomar abgezogen (reserviert).
   - Wird bezahlt → Reservierung wird endgültig.
   - Bricht der Kunde ab / läuft die Stripe-Session ab / schlägt die Zahlung
@@ -9,6 +10,7 @@ Bestandsmodell:
 """
 import threading
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import stripe
 from flask import current_app, session, render_template
@@ -16,7 +18,7 @@ from flask_mail import Message
 from sqlalchemy import update
 
 from extensions import db, mail
-from models import Order, OrderItem, Product, ProductVariant
+from models import DiscountCode, Order, OrderItem, Product, ProductVariant
 from storefronts import current_sf, get_storefront, sf_context
 
 
@@ -61,11 +63,10 @@ def cart_lines():
     """
     Liefert (lines, subtotal_cents, problems).
     Bereinigt den Warenkorb um nicht mehr verfügbare Varianten und
-    begrenzt Mengen auf den aktuellen Bestand.
+    begrenzt Mengen auf das Verfügbare (ohne Kunden den Bestand zu verraten).
     """
     cart = get_cart()
     sf = current_sf()
-    max_qty = current_app.config['SHOP_MAX_QTY_PER_ITEM']
     lines, problems = [], []
     changed = False
 
@@ -77,15 +78,15 @@ def cart_lines():
             cart.pop(vid)
             changed = True
             continue
-        allowed = min(variant.stock, max_qty)
+        allowed = variant.max_qty
         if allowed <= 0:
             problems.append(f'„{_variant_title(variant)}" ist ausverkauft und wurde entfernt.')
             cart.pop(vid)
             changed = True
             continue
         if qty > allowed:
-            problems.append(f'Von „{_variant_title(variant)}" sind nur noch {allowed} Stück '
-                            f'verfügbar — Menge angepasst.')
+            problems.append(f'„{_variant_title(variant)}" ist leider nicht in dieser Menge '
+                            f'verfügbar — wir haben die Menge angepasst.')
             qty = cart[vid] = allowed
             changed = True
         lines.append({
@@ -99,8 +100,95 @@ def cart_lines():
 
     if changed:
         save_cart(cart)
+
+    # Lieferzeit: Fertigungszuschlag zählt pro Produkt über alle Varianten
+    per_product = {}
+    for l in lines:
+        per_product[l['product'].id] = per_product.get(l['product'].id, 0) + l['qty']
+    for l in lines:
+        l['delivery'] = l['product'].delivery_text(per_product[l['product'].id])
+        l['extra_days'] = l['product'].extra_days_for(per_product[l['product'].id])
+
     subtotal = sum(l['total_cents'] for l in lines)
     return lines, subtotal, problems
+
+
+# ---------------------------------------------------------------------------
+# Rabattcodes (eingegebener Code liegt pro Schaufenster in der Session)
+# ---------------------------------------------------------------------------
+STRIPE_MIN_CHARGE_CENTS = 50
+_INVALID = 'Dieser Rabattcode ist leider nicht gültig.'
+
+
+def _discount_key():
+    return f'discount_{current_sf().key}'
+
+
+def normalize_code(code):
+    return (code or '').strip().upper().replace(' ', '')
+
+
+def set_discount_input(code):
+    session[_discount_key()] = normalize_code(code)
+
+
+def clear_discount_input():
+    session.pop(_discount_key(), None)
+
+
+def berlin_today():
+    return datetime.now(ZoneInfo('Europe/Berlin')).date()
+
+
+def check_discount(dc, subtotal_cents, sf_key):
+    """Fehlermeldung für den Kunden oder None, wenn der Code anwendbar ist."""
+    if not dc or not dc.is_active or dc.storefront not in ('all', sf_key):
+        return _INVALID
+    today = berlin_today()
+    if dc.valid_from and today < dc.valid_from:
+        return f'Dieser Rabattcode gilt erst ab dem {dc.valid_from:%d.%m.%Y}.'
+    if dc.valid_until and today > dc.valid_until:
+        return 'Dieser Rabattcode ist leider abgelaufen.'
+    if dc.max_uses is not None and dc.uses >= dc.max_uses:
+        return 'Dieser Rabattcode wurde bereits eingelöst.'
+    if subtotal_cents < dc.min_order_cents:
+        return (f'Dieser Rabattcode gilt ab einem Bestellwert von '
+                f'{format_euro(dc.min_order_cents)}.')
+    return None
+
+
+def cart_totals(subtotal_cents):
+    """
+    Zwischensumme, Rabatt, Versand, Gesamt — eine Quelle für Warenkorb,
+    Bestellübersicht und Bestellung.
+    """
+    sf = current_sf()
+    code = session.get(_discount_key())
+    dc = DiscountCode.query.filter_by(code=code).first() if code else None
+    error = check_discount(dc, subtotal_cents, sf.key) if code else None
+    if code and error == _INVALID:
+        clear_discount_input()   # unbekannte/inaktive Codes nicht mitschleppen
+    applied = dc if code and not error else None
+
+    discount = applied.amount_for(subtotal_cents) if applied else 0
+    if applied and applied.free_shipping:
+        shipping = 0
+    else:
+        shipping = shipping_for(subtotal_cents - discount)
+    total = subtotal_cents - discount + shipping
+    # Stripe kann keine Zahlungen unter 0,50 € abwickeln
+    if discount and total < STRIPE_MIN_CHARGE_CENTS:
+        discount = max(0, subtotal_cents + shipping - STRIPE_MIN_CHARGE_CENTS)
+        total = subtotal_cents - discount + shipping
+    return {
+        'subtotal': subtotal_cents,
+        'discount_code': applied,
+        'discount_input': code if code and error != _INVALID else '',
+        'discount_error': error,
+        'discount_cents': discount,
+        'shipping': shipping,
+        'total': total,
+    }
 
 
 def shipping_for(subtotal_cents):
@@ -124,29 +212,40 @@ class OutOfStock(Exception):
     pass
 
 
-def create_order_from_cart(lines, subtotal_cents):
-    """Legt eine Bestellung im Status 'Offen' an und zieht den Bestand atomar ab."""
-    order = Order(status='Offen', subtotal_cents=subtotal_cents, storefront=current_sf().key)
-    order.shipping_cents = shipping_for(subtotal_cents)
-    order.total_cents = subtotal_cents + order.shipping_cents
+def create_order_from_cart(lines, totals):
+    """
+    Legt eine Bestellung im Status 'Offen' an und zieht den Bestand atomar ab
+    (außer bei Artikeln, die auf Bestellung gefertigt werden).
+    """
+    dc = totals['discount_code']
+    order = Order(status='Offen', storefront=current_sf().key,
+                  subtotal_cents=totals['subtotal'], discount_cents=totals['discount_cents'],
+                  shipping_cents=totals['shipping'], total_cents=totals['total'])
+    if dc:
+        order.discount_code_id = dc.id
+        order.discount_code = dc.code
 
     try:
         for line in lines:
             v = line['variant']
-            # Bedingtes UPDATE: nur abziehen, wenn genug da ist (race-sicher)
-            result = db.session.execute(
-                update(ProductVariant)
-                .where(ProductVariant.id == v.id, ProductVariant.stock >= line['qty'])
-                .values(stock=ProductVariant.stock - line['qty'])
-            )
-            if result.rowcount != 1:
-                raise OutOfStock(line['title'])
+            mto = v.product.made_to_order
+            if not mto:
+                # Bedingtes UPDATE: nur abziehen, wenn genug da ist (race-sicher)
+                result = db.session.execute(
+                    update(ProductVariant)
+                    .where(ProductVariant.id == v.id, ProductVariant.stock >= line['qty'])
+                    .values(stock=ProductVariant.stock - line['qty'])
+                )
+                if result.rowcount != 1:
+                    raise OutOfStock(line['title'])
             order.items.append(OrderItem(
                 variant_id=v.id,
                 product_name=v.product.name,
                 variant_name=v.name,
                 unit_price_cents=line['unit_cents'],
                 quantity=line['qty'],
+                made_to_order=mto,
+                delivery_time=line.get('delivery') or v.product.delivery_time,
             ))
         order.stock_reserved = True
         db.session.add(order)
@@ -164,7 +263,7 @@ def release_stock(order):
     if not order.stock_reserved:
         return
     for item in order.items:
-        if item.variant_id:
+        if item.variant_id and not item.made_to_order:
             db.session.execute(
                 update(ProductVariant)
                 .where(ProductVariant.id == item.variant_id)
@@ -225,7 +324,21 @@ def create_checkout_session(order, success_url, cancel_url, terms_url, withdrawa
     expires_at = int(datetime.utcnow().timestamp()) + \
         current_app.config['SHOP_CHECKOUT_MINUTES'] * 60 + 30
 
+    extra = {}
+    if order.discount_cents:
+        # Einmal-Gutschein über genau den bei uns berechneten Betrag
+        coupon = s.Coupon.create(
+            amount_off=order.discount_cents, currency='eur', duration='once',
+            max_redemptions=1, name=f'Rabattcode {order.discount_code}'[:40],
+            metadata={'order_number': order.number},
+        )
+        extra['discounts'] = [{'coupon': coupon.id}]
+    shipping_label = current_app.config['SHOP_SHIPPING_LABEL']
+    if order.shipping_cents == 0 and order.discount_code:
+        shipping_label += f' (kostenlos mit {order.discount_code})'
+
     checkout = s.checkout.Session.create(
+        **extra,
         mode='payment',
         locale='de',
         submit_type='pay',
@@ -234,7 +347,7 @@ def create_checkout_session(order, success_url, cancel_url, terms_url, withdrawa
         shipping_options=[{
             'shipping_rate_data': {
                 'type': 'fixed_amount',
-                'display_name': current_app.config['SHOP_SHIPPING_LABEL'],
+                'display_name': shipping_label,
                 'fixed_amount': {'amount': order.shipping_cents, 'currency': 'eur'},
             },
         }],
@@ -304,6 +417,14 @@ def sync_order_with_session(order, session_id=None):
         order.country = _get(addr, 'country')
         pi = _get(sess, 'payment_intent')
         order.stripe_payment_intent = pi if isinstance(pi, str) else _get(pi, 'id')
+        db.session.commit()
+
+    amount = _get(sess, 'amount_total')
+    if isinstance(amount, int) and amount != order.total_cents and not order.notes:
+        current_app.logger.error(f'Betrag weicht ab ({order.number}): Stripe {amount}, '
+                                 f'Shop {order.total_cents}')
+        order.notes = (f'ACHTUNG: Stripe hat {format_euro(amount)} abgerechnet, '
+                       f'Shop erwartet {format_euro(order.total_cents)}.')
         db.session.commit()
 
     if sess.payment_status == 'paid' and order.status == 'Offen':
