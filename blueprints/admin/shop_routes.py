@@ -1,4 +1,5 @@
 """Admin: Produkte, Bestellungen, Rabattcodes, Widerrufe."""
+import itertools
 import os
 import re
 import uuid
@@ -10,7 +11,8 @@ from flask_login import login_required
 from sqlalchemy import update
 
 from extensions import db
-from models import (Product, ProductVariant, ProductImage, Order, OrderItem,
+from models import (Product, ProductVariant, ProductImage, ProductOption, ProductOptionValue,
+                    Order, OrderItem,
                     Withdrawal, DiscountCode, DISCOUNT_KINDS, ORDER_STATUSES)
 from blueprints.shop import services as svc
 from .routes import admin_bp
@@ -135,7 +137,6 @@ def _save_product_form(product):
         errors.append('Name fehlt.')
     product.short_description = f.get('short_description', '').strip() or None
     product.description = f.get('description', '').strip() or None
-    product.variant_label = f.get('variant_label', '').strip() or 'Ausführung'
     product.delivery_time = f.get('delivery_time', '').strip() or '3–5 Werktage'
     product.material = f.get('material', '').strip() or None
     product.safety_info = f.get('safety_info', '').strip() or None
@@ -166,46 +167,106 @@ def _save_product_form(product):
     with db.session.no_autoflush:
         product.slug = unique_slug(slugify(slug_input or product.name), product.id)
 
-    # --- Varianten: Felder variants-<idx>-<feld> ---
-    rows = {}
+    # --- Bestand/SKU/aktiv der bestehenden Kombinationen ---
+    for v in product.variants:
+        if f.get(f'combo-{v.id}-seen') != '1':
+            continue
+        v.sku = f.get(f'combo-{v.id}-sku', '').strip() or None
+        v.is_active = f.get(f'combo-{v.id}-active') == '1'
+        raw = f.get(f'combo-{v.id}-stock', '').strip()
+        if raw:
+            if not raw.isdigit():
+                errors.append(f'„{v.name}": Bestand muss eine ganze Zahl sein.')
+            else:
+                v.stock = int(raw)
+
+    # --- Optionsgruppen: opt-<g>-<feld>, Werte: opt-<g>-val-<i>-<feld> ---
+    groups, values = {}, {}
     for key, value in f.items():
-        m = re.match(r'variants-(\d+)-(\w+)$', key)
+        m = re.match(r'opt-(\d+)-val-(\d+)-(\w+)$', key)
         if m:
-            rows.setdefault(int(m.group(1)), {})[m.group(2)] = value.strip()
-
-    existing = {v.id: v for v in product.variants}
-    kept = 0
-    for idx in sorted(rows):
-        row = rows[idx]
-        vid = int(row['id']) if row.get('id') else None
-        variant = existing.get(vid) if vid else None
-        if row.get('delete') == '1':
-            if variant:
-                _delete_variant(variant)
+            values.setdefault(int(m.group(1)), {}).setdefault(int(m.group(2)), {})[m.group(3)] = value.strip()
             continue
-        if not row.get('name'):
-            if variant or any(row.get(k) for k in ('price', 'stock', 'sku')):
-                errors.append(f'Variante {idx + 1}: Name fehlt.')
-            continue
-        if not variant:
-            variant = ProductVariant()
-            product.variants.append(variant)
-        variant.name = row['name']
-        variant.sku = row.get('sku') or None
-        variant.is_active = row.get('active') == '1'
-        variant.position = kept
-        try:
-            variant.price_cents = parse_euro(row.get('price'))
-        except ValueError as e:
-            errors.append(f'Variante „{variant.name}": {e}')
-        try:
-            variant.stock = max(0, int(row.get('stock') or 0))
-        except ValueError:
-            errors.append(f'Variante „{variant.name}": Bestand muss eine Zahl sein.')
-        kept += 1
+        m = re.match(r'opt-(\d+)-(\w+)$', key)
+        if m:
+            groups.setdefault(int(m.group(1)), {})[m.group(2)] = value.strip()
 
-    if kept == 0:
-        errors.append('Mindestens eine Variante nötig (bei nur einer z. B. „Standard").')
+    existing_opts = {o.id: o for o in product.options}
+    kept, drop_opts, drop_vals = [], [], []
+    for g in sorted(set(groups) | set(values)):
+        row = groups.get(g, {})
+        opt = existing_opts.get(int(row['id'])) if row.get('id', '').isdigit() else None
+        rows = [values.get(g, {})[i] for i in sorted(values.get(g, {}))]
+        live = [r for r in rows if r.get('name') and r.get('delete') != '1']
+        name = row.get('name', '')
+        if row.get('delete') == '1' or (not name and not live):
+            if opt:
+                drop_opts.append(opt)
+            continue
+        if not name:
+            errors.append(f'Optionsgruppe {g + 1}: Name fehlt (z. B. „Größe“).')
+            continue
+        if not live:
+            errors.append(f'Optionsgruppe „{name}": mindestens einen Wert eintragen.')
+            continue
+        if not opt:
+            opt = ProductOption()
+            product.options.append(opt)
+        opt.name, opt.position = name, len(kept)
+        existing_vals = {v.id: v for v in opt.values}
+        kept_vals, seen = [], set()
+        for r in rows:
+            val = existing_vals.get(int(r['id'])) if r.get('id', '').isdigit() else None
+            if not r.get('name') or r.get('delete') == '1':
+                if val:
+                    drop_vals.append(val)
+                continue
+            if r['name'].lower() in seen:
+                errors.append(f'„{name}": Wert „{r["name"]}" ist doppelt.')
+                continue
+            seen.add(r['name'].lower())
+            if not val:
+                val = ProductOptionValue()
+                opt.values.append(val)
+            val.name, val.position = r['name'], len(kept_vals)
+            try:
+                val.surcharge_cents = parse_euro(r.get('surcharge')) or 0
+            except ValueError as e:
+                errors.append(f'„{name}: {r["name"]}": {e} Aufpreise dürfen nicht negativ sein.')
+            kept_vals.append(val)
+        kept.append(kept_vals)
+
+    if len(kept) > 3:
+        errors.append('Maximal 3 Optionsgruppen.')
+    combos = list(itertools.product(*kept))  # ohne Gruppen: [()] → „Standard“
+    if len(combos) > 150:
+        errors.append(f'{len(combos)} Kombinationen sind zu viele (max. 150).')
+    default_stock = f.get('default_stock', '0').strip()
+    default_stock = int(default_stock) if default_stock.isdigit() else 0
+
+    if not errors:
+        db.session.flush()  # IDs für neue Werte
+        by_key = {frozenset(x.id for x in v.values): v for v in list(product.variants)}
+        wanted = {frozenset(x.id for x in c): c for c in combos}
+        for key, v in by_key.items():
+            if key not in wanted:
+                _delete_variant(v)
+        for pos, (key, combo) in enumerate(wanted.items()):
+            v = by_key.get(key)
+            if not v:
+                v = ProductVariant(stock=0 if product.made_to_order else default_stock,
+                                   is_active=True)
+                v.values = list(combo)
+                product.variants.append(v)
+            v.name = ' / '.join(x.name for x in combo) or 'Standard'
+            v.position = pos
+        for val in drop_vals:
+            if val.option in product.options and val in val.option.values:
+                val.option.values.remove(val)
+            db.session.delete(val)
+        for opt in drop_opts:
+            product.options.remove(opt)
+            db.session.delete(opt)
 
     # --- Bilder: Löschen / Reihenfolge / Alt-Text ---
     for img in list(product.images):
@@ -242,9 +303,45 @@ def _save_product_form(product):
 
 def _delete_variant(variant):
     # Bestellpositionen behalten ihre Kopie von Name/Preis
-    OrderItem.query.filter_by(variant_id=variant.id).update({'variant_id': None})
+    if variant.id:
+        OrderItem.query.filter_by(variant_id=variant.id).update({'variant_id': None})
+    variant.values = []
     variant.product.variants.remove(variant)
     db.session.delete(variant)
+
+
+@admin_bp.route('/produkte/<int:product_id>/duplizieren', methods=['POST'])
+@login_required
+def product_duplicate(product_id):
+    """Komplette Kopie ohne Bilder, als Entwurf. SKUs werden geleert (müssen eindeutig sein)."""
+    src = Product.query.get_or_404(product_id)
+    copy = Product(
+        name=f'{src.name} (Kopie)'[:200], short_description=src.short_description,
+        description=src.description, price_cents=src.price_cents,
+        delivery_time=src.delivery_time, material=src.material, safety_info=src.safety_info,
+        made_to_order=src.made_to_order, extra_day_per_units=src.extra_day_per_units,
+        show_in_main=src.show_in_main, show_in_boutique=src.show_in_boutique,
+        sort_order=src.sort_order, is_active=False,
+    )
+    with db.session.no_autoflush:
+        copy.slug = unique_slug(slugify(copy.name))
+    value_map = {}
+    for o in src.options:
+        new_opt = ProductOption(name=o.name, position=o.position)
+        for v in o.values:
+            nv = ProductOptionValue(name=v.name, surcharge_cents=v.surcharge_cents,
+                                    position=v.position)
+            new_opt.values.append(nv)
+            value_map[v.id] = nv
+        copy.options.append(new_opt)
+    for v in src.variants:
+        nv = ProductVariant(name=v.name, stock=v.stock, is_active=v.is_active, position=v.position)
+        nv.values = [value_map[x.id] for x in v.values]
+        copy.variants.append(nv)
+    db.session.add(copy)
+    db.session.commit()
+    flash('Kopie angelegt (Entwurf, ohne Bilder). Bitte Namen anpassen.', 'success')
+    return redirect(url_for('admin.product_edit', product_id=copy.id))
 
 
 @admin_bp.route('/produkte/<int:product_id>/loeschen', methods=['POST'])

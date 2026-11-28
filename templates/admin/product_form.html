@@ -12,7 +12,12 @@
 <div class="mb-6 flex justify-between items-center">
   <a href="{{ url_for('admin.products') }}" class="text-xs text-gray-600 hover:text-gray-400">← Produkte</a>
   {% if product %}
-  <div class="flex gap-4">
+  <div class="flex flex-wrap items-center gap-4">
+    <form method="POST" action="{{ url_for('admin.product_duplicate', product_id=product.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="text-xs px-3 py-1.5 border border-[#8B2FC9]/50 text-gray-300 rounded-lg hover:border-[#39FF14] hover:text-[#39FF14]"
+              title="Kopie mit allen Angaben und Optionen, ohne Bilder">⧉ Duplizieren</button>
+    </form>
     {% if product.show_in_main %}<a href="{{ url_for('shop.product', slug=product.slug) }}" target="_blank" class="text-xs text-[#8B2FC9] hover:text-[#39FF14]">Im Shop ansehen ↗</a>{% endif %}
     {% if product.show_in_boutique %}<a href="{{ surl('shop.product', sf=boutique_sf, slug=product.slug) }}" target="_blank" class="text-xs text-[#F4C6C0] hover:text-[#39FF14]">In der Boutique ansehen ↗</a>{% endif %}
   </div>
@@ -100,17 +105,51 @@
     </div>
   </section>
 
-  {# Varianten #}
+  {# Optionen #}
   <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
-    <div class="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
-      <div>
-        <h2 class="text-sm font-bold text-white">Varianten & Bestand</h2>
-        <p class="text-xs text-gray-600 mt-1">Ohne Varianten: eine Zeile „Standard“ verwenden — dann wird keine Auswahl angezeigt.</p>
+    <div>
+      <h2 class="text-sm font-bold text-white">Optionen</h2>
+      <p class="text-xs text-gray-600 mt-1">Bis zu 3 Gruppen (z. B. Farbe, Größe, Finish), frei miteinander kombinierbar. Der Aufpreis kommt auf den Produktpreis oben — 0 bzw. leer = Standardpreis. Ohne Gruppen gibt es keine Auswahl.</p>
+      <p class="text-xs text-gray-600 mt-1">Heißt eine Gruppe <span class="text-gray-400">„Farbe“</span>, zeigt die Produktseite beim Anklicken das Bild, dessen <span class="text-gray-400">Bildbeschreibung</span> genauso heißt wie die Farbe.</p>
+    </div>
+    {% set groups = product.options if product else [] %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for g in range(3) %}
+      {% set opt = groups[g] if g < groups|length else none %}
+      <div class="rounded-lg border border-[#8B2FC9]/30 bg-[#130820]/60 p-4 space-y-3 option-box" data-group="{{ g }}">
+        {% if opt %}<input type="hidden" name="opt-{{ g }}-id" value="{{ opt.id }}" />{% endif %}
+        <div>
+          <label class="{{ label_cls }}" for="opt-{{ g }}-name">Gruppe {{ g + 1 }}</label>
+          <input id="opt-{{ g }}-name" type="text" name="opt-{{ g }}-name" value="{{ opt.name if opt else '' }}"
+                 class="{{ small_cls }}" placeholder="{{ ['Farbe', 'Größe', 'Finish'][g] }}" />
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-[11px] text-gray-600"><th class="font-normal pb-1">Wert</th><th class="font-normal pb-1 w-20">Aufpreis €</th><th class="w-6"></th></tr></thead>
+          <tbody class="value-rows">
+            {% for v in (opt.values if opt else []) %}
+            <tr>
+              <td class="pr-1 py-1"><input type="hidden" name="opt-{{ g }}-val-{{ loop.index0 }}-id" value="{{ v.id }}" />
+                <input type="text" name="opt-{{ g }}-val-{{ loop.index0 }}-name" value="{{ v.name }}" class="{{ small_cls }}" /></td>
+              <td class="pr-1 py-1"><input type="text" inputmode="decimal" name="opt-{{ g }}-val-{{ loop.index0 }}-surcharge" value="{{ cents_to_input(v.surcharge_cents) if v.surcharge_cents else '' }}" class="{{ small_cls }}" placeholder="0" /></td>
+              <td class="py-1 text-center"><input type="checkbox" name="opt-{{ g }}-val-{{ loop.index0 }}-delete" value="1" class="w-4 h-4 accent-red-500" title="Wert löschen" /></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="flex items-center justify-between">
+          <button type="button" class="add-value text-xs text-[#39FF14] border border-[#39FF14]/40 px-2.5 py-1 rounded-lg hover:bg-[#39FF14]/10">+ Wert</button>
+          {% if opt %}<label class="flex items-center gap-1.5 text-xs text-red-400"><input type="checkbox" name="opt-{{ g }}-delete" value="1" class="accent-red-500" /> Gruppe löschen</label>{% endif %}
+        </div>
       </div>
-      <div class="sm:w-48">
-        <label class="{{ label_cls }}" for="variant_label">Bezeichnung der Auswahl</label>
-        <input id="variant_label" type="text" name="variant_label" value="{{ val('variant_label', 'Farbe') }}" class="{{ small_cls }}" />
-      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# Kombinationen + Bestand #}
+  <section class="bg-[#1C0D28] border border-[#8B2FC9]/20 rounded-xl p-6 sm:p-8 space-y-5">
+    <div>
+      <h2 class="text-sm font-bold text-white">Kombinationen & Bestand</h2>
+      <p class="text-xs text-gray-600 mt-1">Wird beim Speichern aus den Optionen erzeugt. Bestand gilt je Kombination; „aktiv“ ausschalten, wenn es eine Kombination nicht gibt.</p>
     </div>
 
     {% set mto = (product.made_to_order if product else form.get('made_to_order')) %}
@@ -124,48 +163,43 @@
         <input type="number" min="1" name="extra_day_per_units" value="{{ form.get('extra_day_per_units') or (product.extra_day_per_units if product and product.extra_day_per_units else '') }}"
                class="w-20 bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-1.5 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]" placeholder="10" />
         <span>Stück</span>
-        <p class="w-full text-xs text-gray-600">Beispiel 10: bis 9 Stück gilt die Lieferzeit oben, ab 10 Stück +1 Werktag, ab 20 Stück +2 … (gezählt über alle Varianten). Leer = unabhängig von der Menge. Die Lieferzeit oben sollte die Fertigung schon enthalten, z. B. „4–6 Werktage“.</p>
+        <p class="w-full text-xs text-gray-600">Beispiel 10: bis 9 Stück gilt die Lieferzeit oben, ab 10 Stück +1 Werktag, ab 20 Stück +2 … (gezählt über alle Kombinationen). Leer = unabhängig von der Menge. Die Lieferzeit oben sollte die Fertigung schon enthalten, z. B. „4–6 Werktage“.</p>
+      </div>
+      <div id="stock-default" class="flex flex-wrap items-center gap-2 text-sm text-gray-400" {% if mto %}hidden{% endif %}>
+        <span>Startbestand für neue Kombinationen</span>
+        <input type="number" min="0" name="default_stock" value="{{ form.get('default_stock') or 0 }}"
+               class="w-20 bg-[#130820] border border-[#8B2FC9]/40 rounded-lg px-3 py-1.5 text-gray-100 text-sm focus:outline-none focus:border-[#39FF14]" />
       </div>
     </div>
 
+    {% if product and product.variants %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm min-w-[40rem]">
+      <table class="w-full text-sm min-w-[36rem]">
         <thead>
           <tr class="text-left text-xs text-gray-600">
-            <th class="pb-2 font-normal">Name *</th>
-            <th class="pb-2 font-normal w-28">Preis (leer = Standard)</th>
-            <th class="pb-2 font-normal w-20">Bestand<span class="mto-hint text-[10px] block text-gray-700" {% if not mto %}hidden{% endif %}>nicht genutzt</span></th>
-            <th class="pb-2 font-normal w-28">SKU</th>
+            <th class="pb-2 font-normal">Kombination</th>
+            <th class="pb-2 font-normal w-24 text-right pr-4">Preis</th>
+            <th class="pb-2 font-normal w-24">Bestand<span class="mto-hint text-[10px] block text-gray-700" {% if not mto %}hidden{% endif %}>nicht genutzt</span></th>
+            <th class="pb-2 font-normal w-36">SKU</th>
             <th class="pb-2 font-normal w-14 text-center">Aktiv</th>
-            <th class="pb-2 font-normal w-14 text-center">Löschen</th>
           </tr>
         </thead>
-        <tbody id="variant-rows">
-          {% set variants = product.variants if product else [] %}
-          {% for v in variants %}
-          <tr>
-            <td class="pr-2 py-1"><input type="hidden" name="variants-{{ loop.index0 }}-id" value="{{ v.id }}" />
-              <input type="text" name="variants-{{ loop.index0 }}-name" value="{{ v.name }}" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-{{ loop.index0 }}-price" value="{{ cents_to_input(v.price_cents) }}" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="number" min="0" name="variants-{{ loop.index0 }}-stock" value="{{ v.stock }}" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="text" name="variants-{{ loop.index0 }}-sku" value="{{ v.sku or '' }}" class="{{ small_cls }}" /></td>
-            <td class="py-1 text-center"><input type="checkbox" name="variants-{{ loop.index0 }}-active" value="1" class="w-4 h-4 accent-[#39FF14]" {% if v.is_active %}checked{% endif %} /></td>
-            <td class="py-1 text-center"><input type="checkbox" name="variants-{{ loop.index0 }}-delete" value="1" class="w-4 h-4 accent-red-500" /></td>
-          </tr>
-          {% else %}
-          <tr>
-            <td class="pr-2 py-1"><input type="text" name="variants-0-name" value="Standard" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-0-price" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="number" min="0" name="variants-0-stock" value="1" class="{{ small_cls }}" /></td>
-            <td class="pr-2 py-1"><input type="text" name="variants-0-sku" class="{{ small_cls }}" /></td>
-            <td class="py-1 text-center"><input type="checkbox" name="variants-0-active" value="1" class="w-4 h-4 accent-[#39FF14]" checked /></td>
-            <td class="py-1 text-center"></td>
+        <tbody>
+          {% for v in product.variants %}
+          <tr class="border-t border-[#8B2FC9]/10">
+            <td class="py-1.5 pr-2 text-gray-300">{{ v.name }}</td>
+            <td class="py-1.5 pr-4 text-right text-gray-400 whitespace-nowrap">{{ v.effective_price_cents | euro }}</td>
+            <td class="py-1.5 pr-2"><input type="number" min="0" name="combo-{{ v.id }}-stock" value="{{ v.stock }}" class="{{ small_cls }}" /></td>
+            <td class="py-1.5 pr-2"><input type="text" name="combo-{{ v.id }}-sku" value="{{ v.sku or '' }}" placeholder="{{ v.display_sku }}" class="{{ small_cls }}" /></td>
+            <td class="py-1.5 text-center"><input type="hidden" name="combo-{{ v.id }}-seen" value="1" /><input type="checkbox" name="combo-{{ v.id }}-active" value="1" class="w-4 h-4 accent-[#39FF14]" {% if v.is_active %}checked{% endif %} /></td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <button type="button" id="add-variant" class="text-xs text-[#39FF14] border border-[#39FF14]/40 px-3 py-1.5 rounded-lg hover:bg-[#39FF14]/10">+ Variante</button>
+    {% else %}
+    <p class="text-xs text-gray-600">Nach dem Speichern erscheinen hier die Kombinationen.</p>
+    {% endif %}
   </section>
 
   {# Bilder #}
@@ -180,7 +214,7 @@
       <div class="bg-[#130820] border border-[#8B2FC9]/20 rounded-lg p-2 space-y-2">
         <img src="{{ url_for('shop_common.product_image', filename=img.filename) }}" alt="" class="w-full aspect-square object-cover rounded" />
         <input type="number" name="image-{{ img.id }}-position" value="{{ img.position }}" class="{{ small_cls }}" aria-label="Position" />
-        <input type="text" name="image-{{ img.id }}-alt" value="{{ img.alt or '' }}" placeholder="Bildbeschreibung" class="{{ small_cls }}" />
+        <input type="text" name="image-{{ img.id }}-alt" value="{{ img.alt or '' }}" placeholder="Bildbeschreibung / Farbname" class="{{ small_cls }}" />
         <label class="flex items-center gap-2 text-xs text-red-400"><input type="checkbox" name="image-{{ img.id }}-delete" value="1" class="accent-red-500" /> löschen</label>
       </div>
       {% endfor %}
@@ -214,6 +248,7 @@
   function syncMto() {
     const on = mtoBox.checked;
     document.getElementById('mto-extra').hidden = !on;
+    document.getElementById('stock-default').hidden = on;
     document.querySelectorAll('.mto-hint').forEach(el => el.hidden = !on);
     document.querySelectorAll('input[name$="-stock"]').forEach(el => {
       el.readOnly = on; el.classList.toggle('opacity-30', on);
@@ -222,22 +257,20 @@
   mtoBox.addEventListener('change', syncMto);
   syncMto();
 
-  document.getElementById('add-variant').addEventListener('click', () => {
-    const body = document.getElementById('variant-rows');
-    const idx = Date.now();
-    const cls = {{ small_cls | tojson }};
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="pr-2 py-1"><input type="text" name="variants-${idx}-name" class="${cls}" placeholder="z. B. Schwarz" /></td>
-      <td class="pr-2 py-1"><input type="text" inputmode="decimal" name="variants-${idx}-price" class="${cls}" /></td>
-      <td class="pr-2 py-1"><input type="number" min="0" name="variants-${idx}-stock" value="1" class="${cls}" /></td>
-      <td class="pr-2 py-1"><input type="text" name="variants-${idx}-sku" class="${cls}" /></td>
-      <td class="py-1 text-center"><input type="checkbox" name="variants-${idx}-active" value="1" class="w-4 h-4 accent-[#39FF14]" checked /></td>
-      <td class="py-1 text-center"><button type="button" class="text-red-400 text-lg" aria-label="Zeile entfernen">×</button></td>`;
-    tr.querySelector('button').addEventListener('click', () => tr.remove());
-    body.appendChild(tr);
-    syncMto();
-    tr.querySelector('input').focus();
+  const cls = {{ small_cls | tojson }};
+  document.querySelectorAll('.option-box').forEach(box => {
+    box.querySelector('.add-value').addEventListener('click', () => {
+      const g = box.dataset.group;
+      const idx = Date.now();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="pr-1 py-1"><input type="text" name="opt-${g}-val-${idx}-name" class="${cls}" placeholder="z. B. Rot" /></td>
+        <td class="pr-1 py-1"><input type="text" inputmode="decimal" name="opt-${g}-val-${idx}-surcharge" class="${cls}" placeholder="0" /></td>
+        <td class="py-1 text-center"><button type="button" class="text-red-400 text-lg" aria-label="Zeile entfernen">×</button></td>`;
+      tr.querySelector('button').addEventListener('click', () => tr.remove());
+      box.querySelector('.value-rows').appendChild(tr);
+      tr.querySelector('input').focus();
+    });
   });
 </script>
 {% endblock %}

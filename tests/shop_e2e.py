@@ -90,23 +90,21 @@ def main():
     png = b'\x89PNG\r\n\x1a\n' + b'0' * 100
     ok(c.post('/admin/produkte/neu', data={
         'name': 'Kabelhalter Öko', 'short_description': 'Hält Kabel', 'price': '12,90',
-        'is_active': '1', 'show_in_main': '1', 'variant_label': 'Farbe', 'material': 'PETG',
-        'safety_info': 'Kein Spielzeug.',
-        'variants-0-name': 'Schwarz', 'variants-0-stock': '2', 'variants-0-active': '1',
-        'variants-0-sku': 'KH-SW',
-        'variants-1-name': 'Neongrün', 'variants-1-price': '14,50', 'variants-1-stock': '1',
-        'variants-1-active': '1',
+        'is_active': '1', 'show_in_main': '1', 'material': 'PETG',
+        'safety_info': 'Kein Spielzeug.', 'default_stock': '0',
+        'opt-0-name': 'Farbe', 'opt-0-val-0-name': 'Schwarz',
+        'opt-0-val-1-name': 'Neongrün', 'opt-0-val-1-surcharge': '1,60',
         'images': (io.BytesIO(png), 'a.png')}, content_type='multipart/form-data'), 302)
     assert 'Ungültiger Preis' in ok(c.post('/admin/produkte/neu', data={
-        'name': 'X', 'price': 'abc', 'variants-0-name': 'S'}, follow_redirects=True))
+        'name': 'X', 'price': 'abc'}, follow_redirects=True))
     html = ok(c.post('/admin/produkte/1/bearbeiten', data={
         'name': 'Kabelhalter Öko', 'price': '12,90', 'is_active': '1', 'show_in_main': '1',
-        'material': 'PETG',
-        'safety_info': 'Kein Spielzeug.',
-        'variants-0-id': '1', 'variants-0-name': 'Schwarz', 'variants-0-stock': '2',
-        'variants-0-active': '1', 'variants-0-sku': 'KH-SW',
-        'variants-1-id': '2', 'variants-1-name': 'Neongrün', 'variants-1-price': '14,50',
-        'variants-1-stock': '1', 'variants-1-active': '1',
+        'material': 'PETG', 'safety_info': 'Kein Spielzeug.',
+        'opt-0-id': '1', 'opt-0-name': 'Farbe',
+        'opt-0-val-0-id': '1', 'opt-0-val-0-name': 'Schwarz',
+        'opt-0-val-1-id': '2', 'opt-0-val-1-name': 'Neongrün', 'opt-0-val-1-surcharge': '1,60',
+        'combo-1-seen': '1', 'combo-1-stock': '2', 'combo-1-active': '1', 'combo-1-sku': 'KH-SW',
+        'combo-2-seen': '1', 'combo-2-stock': '1', 'combo-2-active': '1',
         'images': (io.BytesIO(b'<?php'), 'evil.jpg')},
         content_type='multipart/form-data', follow_redirects=True))
     assert 'Keine gültige Bilddatei' in html
@@ -124,7 +122,8 @@ def main():
     html = ok(c.get('/shop/kabelhalter-oeko'))
     assert '12,90 €' in html and 'Neongrün' in html and 'AggregateOffer' in html
     assert 'Versandkosten' in html and '§ 19 UStG' in html
-    assert 'Wolfsgartenstraße 6' in html and 'data-sku="KH-SW"' in html and 'Kein Spielzeug.' in html
+    assert 'Wolfsgartenstraße 6' in html and 'KH-SW' in html and 'Kein Spielzeug.' in html
+    assert '+1,60 €' in html
     assert 'data-stock' not in html and 'Nur noch' not in html and 'max="10"' in html
     print('OK Produktseite: Preisangabe, JSON-LD, GPSR, kein Bestand sichtbar')
 
@@ -243,11 +242,11 @@ def boutique(admin_client):
     """Zweites Schaufenster: eigene Produktauswahl, eigener Warenkorb, eigenes Branding."""
     ok(admin_client.post('/admin/produkte/neu', data={
         'name': 'Nippel-Pasties Glitzer', 'price': '24,00', 'is_active': '1',
-        'show_in_boutique': '1', 'variant_label': 'Farbe',
-        'variants-0-name': 'Rosé', 'variants-0-stock': '3', 'variants-0-active': '1'}), 302)
+        'show_in_boutique': '1', 'default_stock': '3',
+        'opt-0-name': 'Farbe', 'opt-0-val-0-name': 'Rosé'}), 302)
     assert 'Aktives Produkt: bitte mindestens einen Shop' in ok(admin_client.post(
         '/admin/produkte/neu', data={'name': 'Ohne Shop', 'price': '1', 'is_active': '1',
-                                    'variants-0-name': 'S', 'variants-0-active': '1'},
+                                    },
         follow_redirects=True))
     assert 'Boutique' in ok(admin_client.get('/admin/produkte'))
     with app.app_context():
@@ -328,11 +327,10 @@ def discounts_and_made_to_order():
         'name': 'Anhänger Druck', 'price': '3,00', 'is_active': '1', 'show_in_main': '1',
         'show_in_boutique': '1', 'delivery_time': '4–6 Werktage',
         'made_to_order': '1', 'extra_day_per_units': '10',
-        'variants-0-name': 'Rot', 'variants-0-stock': '0', 'variants-0-active': '1',
-        'variants-1-name': 'Blau', 'variants-1-stock': '0', 'variants-1-active': '1'}), 302)
+        'opt-0-name': 'Farbe', 'opt-0-val-0-name': 'Rot', 'opt-0-val-1-name': 'Blau'}), 302)
     assert 'ganze Zahl ab 1' in ok(a.post('/admin/produkte/neu', data={
-        'name': 'Y', 'price': '1', 'made_to_order': '1', 'extra_day_per_units': '0',
-        'variants-0-name': 'S'}, follow_redirects=True))
+        'name': 'Y', 'price': '1', 'made_to_order': '1', 'extra_day_per_units': '0'},
+        follow_redirects=True))
     with app.app_context():
         mp = Product.query.filter_by(slug='anhaenger-druck').one()
         rot, blau = [v.id for v in mp.variants]
@@ -466,6 +464,126 @@ def discounts_and_made_to_order():
     print('OK Admin: Rabatt + Fertigung in Bestellung, Storno ohne Bestandsbuchung')
 
 
+def combinable_options():
+    """3 kombinierbare Gruppen, Aufpreise addieren sich, Bildwechsel bei „Farbe“."""
+    a = app.test_client()
+    ok(a.post('/admin/login', data={'username': 'a', 'password': 'p'}), 302)
+    png = b'\x89PNG\r\n\x1a\n' + b'0' * 100
+    ok(a.post('/admin/produkte/neu', data={
+        'name': 'Pasties Kombi', 'price': '10,00', 'is_active': '1', 'show_in_main': '1',
+        'default_stock': '2',
+        'opt-0-name': 'Farbe', 'opt-0-val-0-name': 'Rot', 'opt-0-val-1-name': 'Gold',
+        'opt-0-val-1-surcharge': '2,00',
+        'opt-1-name': 'Größe', 'opt-1-val-0-name': 'S', 'opt-1-val-1-name': 'L',
+        'opt-1-val-1-surcharge': '1,50',
+        'opt-2-name': 'Finish', 'opt-2-val-0-name': 'Matt', 'opt-2-val-1-name': 'Glanz',
+        'opt-2-val-1-surcharge': '0,50',
+        'images': [(io.BytesIO(png), 'Rot.png'), (io.BytesIO(png), 'Gold.png')]},
+        content_type='multipart/form-data'), 302)
+    assert 'nicht negativ' in ok(a.post('/admin/produkte/neu', data={
+        'name': 'Neg', 'price': '5', 'opt-0-name': 'Farbe', 'opt-0-val-0-name': 'Rot',
+        'opt-0-val-0-surcharge': '-1'}, follow_redirects=True))
+    assert 'mindestens einen Wert' in ok(a.post('/admin/produkte/neu', data={
+        'name': 'Leer', 'price': '5', 'opt-0-name': 'Farbe'}, follow_redirects=True))
+    with app.app_context():
+        p = Product.query.filter_by(slug='pasties-kombi').one()
+        pid = p.id
+        assert len(p.variants) == 8 and all(v.stock == 2 for v in p.variants)
+        prices = sorted(v.effective_price_cents for v in p.variants)
+        assert prices[0] == 1000 and prices[-1] == 1400
+        val = {f'{o.name}:{v.name}': v.id for o in p.options for v in o.values}
+        opt_ids = [o.id for o in p.options]
+        top = next(v for v in p.variants if v.name == 'Gold / L / Glanz')
+        rot_s_matt = next(v for v in p.variants if v.name == 'Rot / S / Matt')
+        imgs = [i.id for i in p.images]
+        # Bildbeschreibungen = Farbnamen
+        p.images[0].alt, p.images[1].alt = 'Rot', 'Gold'
+        db.session.commit()
+        combos = p.combo_map()
+        assert len(combos) == 8 and combos[top.combo_key]['price'] == '14,00 €'
+    html = ok(a.get(f'/admin/produkte/{pid}/bearbeiten'))
+    assert 'Gold / L / Glanz' in html and '14,00 €' in html
+
+    # Kombination „Rot / S / Matt“ deaktivieren, „Gold“ → „Goldglitzer“ umbenennen,
+    # Wert „Glanz“ löschen → Kombinationen mit Glanz verschwinden, Rest behält Bestand
+    data = {'name': 'Pasties Kombi', 'price': '10,00', 'is_active': '1', 'show_in_main': '1'}
+    with app.app_context():
+        p = db.session.get(Product, pid)
+        for g, o in enumerate(p.options):
+            data[f'opt-{g}-id'] = str(o.id)
+            data[f'opt-{g}-name'] = o.name
+            for i, v in enumerate(o.values):
+                data[f'opt-{g}-val-{i}-id'] = str(v.id)
+                data[f'opt-{g}-val-{i}-name'] = 'Goldglitzer' if v.name == 'Gold' else v.name
+                data[f'opt-{g}-val-{i}-surcharge'] = f'{v.surcharge_cents / 100:.2f}'.replace('.', ',')
+                if v.name == 'Glanz':
+                    data[f'opt-{g}-val-{i}-delete'] = '1'
+        for img in p.images:
+            data[f'image-{img.id}-alt'] = img.alt
+            data[f'image-{img.id}-position'] = str(img.position)
+        for v in p.variants:
+            data[f'combo-{v.id}-seen'] = '1'
+            data[f'combo-{v.id}-stock'] = '5' if v.name == 'Gold / L / Matt' else str(v.stock)
+            if v.id != rot_s_matt.id:
+                data[f'combo-{v.id}-active'] = '1'
+    ok(a.post(f'/admin/produkte/{pid}/bearbeiten', data=data), 302)
+    with app.app_context():
+        p = db.session.get(Product, pid)
+        names = {v.name: v for v in p.variants}
+        assert len(p.variants) == 4 and 'Goldglitzer / L / Matt' in names
+        assert names['Goldglitzer / L / Matt'].stock == 5
+        assert names['Rot / S / Matt'].is_active is False
+        assert len(p.combo_map()) == 3
+        gold_l = names['Goldglitzer / L / Matt'].id
+    # Duplizieren: alles außer Bildern, als Entwurf, ohne SKUs
+    assert 'Duplizieren' in ok(a.get(f'/admin/produkte/{pid}/bearbeiten'))
+    r = a.post(f'/admin/produkte/{pid}/duplizieren')
+    assert r.status_code == 302
+    with app.app_context():
+        src = db.session.get(Product, pid)
+        dup = Product.query.filter_by(slug='pasties-kombi-kopie').one()
+        assert r.headers['Location'].endswith(f'/admin/produkte/{dup.id}/bearbeiten')
+        assert dup.name == 'Pasties Kombi (Kopie)' and dup.is_active is False and not dup.images
+        assert dup.price_cents == src.price_cents and dup.show_in_main
+        assert [(o.name, [(v.name, v.surcharge_cents) for v in o.values]) for o in dup.options] == \
+            [(o.name, [(v.name, v.surcharge_cents) for v in o.values]) for o in src.options]
+        assert [(v.name, v.stock, v.is_active) for v in dup.variants] == \
+            [(v.name, v.stock, v.is_active) for v in src.variants]
+        assert all(v.sku is None for v in dup.variants)
+        assert {v.id for o in dup.options for v in o.values}.isdisjoint(
+            {v.id for o in src.options for v in o.values})
+        assert sorted(dup.combo_map()[k]['price'] for k in dup.combo_map()) == \
+            sorted(src.combo_map()[k]['price'] for k in src.combo_map())
+    ok(a.get(f'/admin/produkte/{dup.id}/bearbeiten'))
+    a.get('/admin/logout')
+
+    c = app.test_client()
+    html = ok(c.get('/shop/pasties-kombi'))
+    for needle in ('Farbe', 'Größe', 'Finish', 'Goldglitzer', '+2,00 €', '+1,50 €',
+                   'data-color', 'data-alt="Rot"', 'name="product_id"'):
+        assert needle in html, needle
+    assert 'Glanz' not in html
+    # Auswahl über die Options-Radios (ohne JS)
+    ok(c.post('/warenkorb/hinzufuegen', data={
+        'product_id': pid, f'opt-{opt_ids[0]}': val['Farbe:Gold'], f'opt-{opt_ids[1]}': val['Größe:L'],
+        f'opt-{opt_ids[2]}': val['Finish:Matt'], 'qty': 1}), 302)
+    html = ok(c.get('/warenkorb'))
+    assert 'Pasties Kombi – Goldglitzer / L / Matt' in html and '13,50 €' in html
+    # deaktivierte Kombination ist nicht bestellbar
+    r = c.post('/warenkorb/hinzufuegen', data={
+        'product_id': pid, f'opt-{opt_ids[0]}': val['Farbe:Rot'], f'opt-{opt_ids[1]}': val['Größe:S'],
+        f'opt-{opt_ids[2]}': val['Finish:Matt'], 'qty': 1}, follow_redirects=True)
+    assert 'nicht verfügbar' in r.get_data(as_text=True)
+    with mock.patch('stripe.checkout.Session.create',
+                    side_effect=lambda **kw: NS(id='cs_o_1', url='https://x')):
+        ok(c.post('/kasse'), 303)
+    with app.app_context():
+        o = Order.query.filter_by(stripe_session_id='cs_o_1').one()
+        assert o.items[0].variant_name == 'Farbe: Goldglitzer, Größe: L, Finish: Matt'
+        assert o.items[0].unit_price_cents == 1350 and o.items[0].variant_id == gold_l
+    print('OK 3 kombinierbare Optionsgruppen, Aufpreise, Bildwechsel-Daten, Kombinationen, Duplizieren')
+
+
 def disabled_mode():
     """SHOP_ENABLED=false: Shop 404, Rechtstexte erreichbar."""
     app.config['SHOP_ENABLED'] = False
@@ -484,5 +602,6 @@ def disabled_mode():
 if __name__ == '__main__':
     main()
     discounts_and_made_to_order()
+    combinable_options()
     disabled_mode()
     print('\nALLE SHOP-TESTS GRÜN')

@@ -191,6 +191,15 @@ def cart_totals(subtotal_cents):
     }
 
 
+def find_variant(product_id, value_ids):
+    """Kombination eines Produkts zu den gewählten Optionswerten."""
+    product = db.session.get(Product, product_id or 0)
+    if not product:
+        return None
+    wanted = set(value_ids)
+    return next((v for v in product.variants if {x.id for x in v.values} == wanted), None)
+
+
 def shipping_for(subtotal_cents):
     cfg = current_app.config
     free_from = cfg['SHOP_FREE_SHIPPING_FROM_CENTS']
@@ -200,7 +209,7 @@ def shipping_for(subtotal_cents):
 
 
 def _variant_title(variant):
-    if len(variant.product.variants) > 1 or variant.name != 'Standard':
+    if variant.values:
         return f'{variant.product.name} – {variant.name}'
     return variant.product.name
 
@@ -241,7 +250,7 @@ def create_order_from_cart(lines, totals):
             order.items.append(OrderItem(
                 variant_id=v.id,
                 product_name=v.product.name,
-                variant_name=v.name,
+                variant_name=v.option_text or v.name,
                 unit_price_cents=line['unit_cents'],
                 quantity=line['qty'],
                 made_to_order=mto,

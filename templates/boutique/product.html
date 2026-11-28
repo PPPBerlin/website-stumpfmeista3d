@@ -61,44 +61,36 @@
       {% if product.short_description %}<p class="text-[#7D6A70] mt-3 text-lg">{{ product.short_description }}</p>{% endif %}
 
       <p id="price" class="font-display text-4xl text-[#7A2338] mt-6">
-        {{ (variants[0].effective_price_cents if variants else product.price_cents) | euro }}
+        {{ (default.effective_price_cents if default else product.price_cents) | euro }}
       </p>
       {% include 'boutique/_price_note.html' %}
 
       <form method="POST" action="{{ surl('shop.cart_add') }}" class="mt-8 space-y-6">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        {% if variants | length > 1 %}
-        <fieldset>
-          <legend class="text-xs tracking-[0.2em] uppercase text-[#7D6A70] mb-3">{{ product.variant_label }}</legend>
+        <input type="hidden" name="product_id" value="{{ product.id }}" />
+        <input type="hidden" name="variant_id" id="variant-id" value="{{ default.id if default else '' }}" />
+        {% set chosen = (default.values | map(attribute='id') | list) if default else [] %}
+        {% for opt in product.options %}
+        <fieldset class="option-group"{% if opt.is_color %} data-color{% endif %}>
+          <legend class="text-xs tracking-[0.2em] uppercase text-[#7D6A70] mb-3">{{ opt.name }}</legend>
           <div class="flex flex-wrap gap-2">
-            {% set first_available = (variants | selectattr('available') | first) %}
-            {% for v in variants %}
+            {% for val in opt.values %}
             <label class="cursor-pointer">
-              <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
-                     data-price="{{ v.effective_price_cents | euro }}" data-available="{{ 1 if v.available else 0 }}"
-                     data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
-                     {% if not v.available %}disabled{% endif %}
-                     {% if first_available and v.id == first_available.id %}checked{% endif %} />
-              <span class="block px-5 py-2.5 rounded-full border text-sm transition-all
-                           border-[#EADBD6] bg-white text-[#4A3A40]
-                           peer-checked:border-[#7A2338] peer-checked:bg-[#7A2338] peer-checked:text-white
-                           peer-disabled:opacity-40 peer-disabled:line-through peer-disabled:cursor-not-allowed
-                           peer-focus-visible:ring-2 peer-focus-visible:ring-[#B08D57] peer-focus-visible:ring-offset-2">
-                {{ v.name }}
+              <input type="radio" name="opt-{{ opt.id }}" value="{{ val.id }}" data-name="{{ val.name }}" class="peer sr-only"
+                     {% if val.id in chosen or (not chosen and loop.first) %}checked{% endif %} />
+              <span class="block px-5 py-2.5 rounded-full border text-sm transition-all border-[#EADBD6] bg-white text-[#4A3A40] peer-checked:border-[#7A2338] peer-checked:bg-[#7A2338] peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-[#B08D57] peer-focus-visible:ring-offset-2">
+                {{ val.name }}{% if val.surcharge_cents %} <span class="text-xs opacity-75">+{{ val.surcharge_cents | euro }}</span>{% endif %}
               </span>
             </label>
             {% endfor %}
           </div>
         </fieldset>
-        {% elif variants %}
-        <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
-               data-price="{{ variants[0].effective_price_cents | euro }}" data-available="{{ 1 if variants[0].available else 0 }}"
-               data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
-        {% endif %}
+        {% endfor %}
+        <script type="application/json" id="combos">{{ combos | tojson }}</script>
 
         <p id="stock-info" class="text-sm" data-ok="text-sm text-[#5C7A55]" data-out="text-sm text-[#7D6A70]"
-           data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
+           data-na="text-sm text-[#7D6A70]" data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
 
         {% if not product.is_sold_out %}
         <div class="flex gap-3">

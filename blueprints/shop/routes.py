@@ -83,7 +83,8 @@ def product(slug):
     sf = current_sf()
     if (not p.is_active or not p.in_storefront(sf.key)) and not current_user.is_authenticated:
         abort(404)
-    return render_template(tpl('product.html'), product=p, variants=p.active_variants)
+    return render_template(tpl('product.html'), product=p, variants=p.active_variants,
+                           default=p.default_variant, combos=p.combo_map())
 
 
 @shop_common_bp.route('/shop/bild/<path:filename>')
@@ -131,7 +132,13 @@ def cart_discount():
 @limiter.limit('60 per hour')
 def cart_add():
     sf = current_sf()
-    variant = db.session.get(ProductVariant, request.form.get('variant_id', type=int) or 0)
+    # Gewählte Optionen (opt-<gruppe>=<wert>) haben Vorrang vor variant_id —
+    # so funktioniert die Auswahl auch ohne JavaScript.
+    value_ids = [int(v) for k, v in request.form.items() if k.startswith('opt-') and v.isdigit()]
+    if value_ids:
+        variant = svc.find_variant(request.form.get('product_id', type=int), value_ids)
+    else:
+        variant = db.session.get(ProductVariant, request.form.get('variant_id', type=int) or 0)
     if (not variant or not variant.is_active or not variant.product.is_active
             or not variant.product.in_storefront(sf.key)):
         flash('Dieser Artikel ist nicht verfügbar.', 'error')

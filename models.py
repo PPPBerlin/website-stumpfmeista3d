@@ -164,8 +164,6 @@ class Product(db.Model):
     short_description = db.Column(db.String(300), nullable=True)
     description = db.Column(db.Text, nullable=True)
     price_cents = db.Column(db.Integer, nullable=False, default=0)
-    # Bezeichnung der Variantenauswahl, z.B. "Farbe" oder "Größe"
-    variant_label = db.Column(db.String(50), nullable=False, default='Ausführung')
     delivery_time = db.Column(db.String(100), nullable=False, default='3–5 Werktage')
     # Auf Bestellung gefertigt: kein Bestand, nie ausverkauft
     made_to_order = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
@@ -188,6 +186,11 @@ class Product(db.Model):
     images = db.relationship('ProductImage', backref='product',
                              order_by='ProductImage.position',
                              cascade='all, delete-orphan')
+    # Bis zu 3 frei kombinierbare Optionsgruppen (z. B. Farbe, Größe, Finish).
+    # Jede Kombination ist eine ProductVariant (eigener Bestand + SKU).
+    options = db.relationship('ProductOption', backref='product',
+                              order_by='ProductOption.position',
+                              cascade='all, delete-orphan')
 
     def in_storefront(self, key):
         return bool(getattr(self, f'show_in_{key}', False))
@@ -221,6 +224,19 @@ class Product(db.Model):
     def is_sold_out(self):
         return not any(v.available for v in self.active_variants)
 
+    @property
+    def default_variant(self):
+        """Vorauswahl auf der Produktseite: erste verfügbare Kombination."""
+        active = self.active_variants
+        return next((v for v in active if v.available), active[0] if active else None)
+
+    def combo_map(self):
+        """{"<Wert-IDs sortiert, mit - verbunden>": {...}} für die Produktseite."""
+        from blueprints.shop.services import format_euro
+        return {v.combo_key: {'id': v.id, 'price': format_euro(v.effective_price_cents),
+                              'available': v.available, 'sku': v.display_sku}
+                for v in self.active_variants}
+
     def extra_days_for(self, qty):
         """Zusätzliche Werktage Fertigung bei qty Stück (ab N Stück +1, ab 2N +2 …)."""
         if not self.made_to_order or not self.extra_day_per_units or qty <= 0:
@@ -237,22 +253,76 @@ class Product(db.Model):
         return f'<Product {self.slug}>'
 
 
+variant_option_values = db.Table(
+    'variant_option_values',
+    db.Column('variant_id', db.Integer, db.ForeignKey('product_variants.id'), primary_key=True),
+    db.Column('value_id', db.Integer, db.ForeignKey('product_option_values.id'), primary_key=True),
+)
+
+
+class ProductOption(db.Model):
+    """Optionsgruppe, z. B. „Farbe“. Bei „Farbe“ wechselt das Produktbild mit."""
+    __tablename__ = 'product_options'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    position = db.Column(db.Integer, nullable=False, default=0)
+
+    values = db.relationship('ProductOptionValue', backref='option',
+                             order_by='ProductOptionValue.position',
+                             cascade='all, delete-orphan')
+
+    @property
+    def is_color(self):
+        return self.name.strip().lower() == 'farbe'
+
+
+class ProductOptionValue(db.Model):
+    """Wert einer Optionsgruppe mit Aufpreis auf den Produktpreis."""
+    __tablename__ = 'product_option_values'
+
+    id = db.Column(db.Integer, primary_key=True)
+    option_id = db.Column(db.Integer, db.ForeignKey('product_options.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    surcharge_cents = db.Column(db.Integer, nullable=False, default=0)
+    position = db.Column(db.Integer, nullable=False, default=0)
+
+
 class ProductVariant(db.Model):
+    """Eine konkrete Kombination aus Optionswerten (ohne Optionen: „Standard“)."""
     __tablename__ = 'product_variants'
 
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    # Leer = Produktpreis gilt
-    price_cents = db.Column(db.Integer, nullable=True)
+    name = db.Column(db.String(300), nullable=False)    # z. B. „Rot / M / Glitzer“
     stock = db.Column(db.Integer, nullable=False, default=0)
     sku = db.Column(db.String(64), nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     position = db.Column(db.Integer, nullable=False, default=0)
 
+    values = db.relationship('ProductOptionValue', secondary=variant_option_values)
+
+    @property
+    def sorted_values(self):
+        return sorted(self.values, key=lambda v: (v.option.position, v.position))
+
+    @property
+    def combo_key(self):
+        return '-'.join(str(i) for i in sorted(v.id for v in self.values))
+
+    @property
+    def option_text(self):
+        """„Farbe: Rot, Größe: M“ — wird so in Bestellungen gespeichert."""
+        return ', '.join(f'{v.option.name}: {v.name}' for v in self.sorted_values)
+
+    @property
+    def display_sku(self):
+        return self.sku or f'SM3D-{self.product_id}-{self.id}'
+
     @property
     def effective_price_cents(self):
-        return self.price_cents if self.price_cents is not None else self.product.price_cents
+        return self.product.price_cents + sum(v.surcharge_cents for v in self.values)
 
     @property
     def available(self):

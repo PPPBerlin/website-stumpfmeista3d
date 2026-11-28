@@ -67,44 +67,36 @@
       {% endif %}
 
       <p id="price" class="text-3xl font-bold text-[#39FF14] mt-6" style="text-shadow: 0 0 10px #39FF1460;">
-        {{ (variants[0].effective_price_cents if variants else product.price_cents) | euro }}
+        {{ (default.effective_price_cents if default else product.price_cents) | euro }}
       </p>
       {% include 'shop/_price_note.html' %}
 
       <form method="POST" action="{{ url_for('shop.cart_add') }}" class="mt-8 space-y-5">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        {% if variants | length > 1 %}
-        <fieldset>
-          <legend class="block text-xs text-gray-400 uppercase tracking-wider mb-2">{{ product.variant_label }}</legend>
+        <input type="hidden" name="product_id" value="{{ product.id }}" />
+        <input type="hidden" name="variant_id" id="variant-id" value="{{ default.id if default else '' }}" />
+        {% set chosen = (default.values | map(attribute='id') | list) if default else [] %}
+        {% for opt in product.options %}
+        <fieldset class="option-group"{% if opt.is_color %} data-color{% endif %}>
+          <legend class="block text-xs text-gray-400 uppercase tracking-wider mb-2">{{ opt.name }}</legend>
           <div class="flex flex-wrap gap-2">
-            {% set first_available = (variants | selectattr('available') | first) %}
-            {% for v in variants %}
+            {% for val in opt.values %}
             <label class="cursor-pointer">
-              <input type="radio" name="variant_id" value="{{ v.id }}" class="peer sr-only"
-                     data-price="{{ v.effective_price_cents | euro }}" data-available="{{ 1 if v.available else 0 }}"
-                     data-sku="{{ v.sku or ('SM3D-%d-%d' % (product.id, v.id)) }}"
-                     {% if not v.available %}disabled{% endif %}
-                     {% if first_available and v.id == first_available.id %}checked{% endif %} />
-              <span class="block px-4 py-2 rounded-lg border text-sm transition-all
-                           border-[#8B2FC9]/40 text-gray-300
-                           peer-checked:border-[#39FF14] peer-checked:text-[#39FF14] peer-checked:bg-[#39FF14]/10
-                           peer-disabled:opacity-40 peer-disabled:line-through peer-disabled:cursor-not-allowed
-                           peer-focus-visible:ring-2 peer-focus-visible:ring-[#39FF14]">
-                {{ v.name }}
+              <input type="radio" name="opt-{{ opt.id }}" value="{{ val.id }}" data-name="{{ val.name }}" class="peer sr-only"
+                     {% if val.id in chosen or (not chosen and loop.first) %}checked{% endif %} />
+              <span class="block px-4 py-2 rounded-lg border text-sm transition-all border-[#8B2FC9]/40 text-gray-300 peer-checked:border-[#39FF14] peer-checked:text-[#39FF14] peer-checked:bg-[#39FF14]/10 peer-focus-visible:ring-2 peer-focus-visible:ring-[#39FF14]">
+                {{ val.name }}{% if val.surcharge_cents %} <span class="text-xs opacity-70">+{{ val.surcharge_cents | euro }}</span>{% endif %}
               </span>
             </label>
             {% endfor %}
           </div>
         </fieldset>
-        {% elif variants %}
-        <input type="hidden" name="variant_id" value="{{ variants[0].id }}"
-               data-price="{{ variants[0].effective_price_cents | euro }}" data-available="{{ 1 if variants[0].available else 0 }}"
-               data-sku="{{ variants[0].sku or ('SM3D-%d-%d' % (product.id, variants[0].id)) }}" />
-        {% endif %}
+        {% endfor %}
+        <script type="application/json" id="combos">{{ combos | tojson }}</script>
 
         <p id="stock-info" class="text-sm" data-ok="text-sm text-[#39FF14]" data-out="text-sm text-gray-500"
-           data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
+           data-na="text-sm text-gray-500" data-ok-text="{{ 'Wird nach deiner Bestellung für dich gefertigt' if product.made_to_order else 'Auf Lager' }}"></p>
 
         {% if not product.is_sold_out %}
         <div class="flex gap-3">
